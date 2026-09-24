@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Взуття на Висоті | жіноче взуття з доставкою по Україні</title>
+<meta name="description" content="Жіночі чоботи, ботильйони, черевики, туфлі та босоніжки. Розміри 35–42. Замовлення через Viber або Telegram, доставка Новою Поштою.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prata&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --ground:#F5EFEC; --surface:#FFFFFF; --ink:#2B1D1A; --muted:#6B5B55;
+  --line:#E3D8D2; --brand:#5B1A2B; --brand-hover:#46121F; --sand:#C7A883;
+  --display:"Prata", Georgia, "Times New Roman", serif;
+  --body:"Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth; scroll-padding-top:80px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55}
+img{max-width:100%;display:block}
+a{color:var(--brand)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+
+/* top bar + header */
+.topbar{background:var(--ink);color:#EFE6E1;font-size:14px}
+.topbar .wrap{display:flex;justify-content:space-between;gap:16px;padding-top:8px;padding-bottom:8px;flex-wrap:wrap}
+.topbar a{color:#fff;text-decoration:none;font-weight:600}
+header.site{position:sticky;top:0;z-index:20;background:rgba(245,239,236,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.site .wrap{display:flex;align-items:center;gap:32px;height:72px}
+.logo{font-family:var(--display);font-size:26px;color:var(--ink);text-decoration:none;white-space:nowrap}
+nav.main{display:flex;gap:24px;flex:1;overflow-x:auto}
+nav.main button{background:none;border:0;padding:8px 0;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent}
+nav.main button:hover{border-bottom-color:var(--sand)}
+.cart-btn{display:flex;align-items:center;gap:8px;background:var(--brand);color:#fff;border:0;border-radius:999px;padding:10px 18px;font-weight:600;min-height:44px}
+.cart-btn:hover{background:var(--brand-hover)}
+.cart-count{background:#fff;color:var(--brand);border-radius:999px;min-width:22px;height:22px;display:grid;place-items:center;font-size:13px;padding:0 6px}
+
+/* hero */
+.hero{padding:64px 0 56px}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:48px;align-items:end}
+.hero h1{font-family:var(--display);font-weight:400;font-size:clamp(44px,6.4vw,88px);line-height:1.02;margin:0 0 24px;letter-spacing:-.01em}
+.hero p{font-size:19px;color:var(--muted);max-width:30em;margin:0 0 32px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 26px;border-radius:999px;border:1px solid var(--brand);background:var(--brand);color:#fff;font-weight:600;text-decoration:none}
+.btn:hover{background:var(--brand-hover)}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn.ghost:hover{background:#fff}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end;height:460px}
+.steps figure{margin:0;border-radius:6px;overflow:hidden;background:#E8DFDA;position:relative}
+.steps figure:nth-child(1){height:62%}
+.steps figure:nth-child(2){height:81%}
+.steps figure:nth-child(3){height:100%}
+.steps img{width:100%;height:100%;object-fit:cover}
+.steps figcaption{position:absolute;left:10px;bottom:10px;background:rgba(255,255,255,.92);font-size:13px;padding:4px 10px;border-radius:999px}
+
+.facts{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface)}
+.facts .wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding-top:22px;padding-bottom:22px}
+.facts div{font-size:15px;color:var(--muted)}
+.facts strong{display:block;color:var(--ink);font-size:17px;font-weight:600}
+
+/* catalog */
+.catalog{padding:56px 0 80px}
+.catalog-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+.catalog-head h2{font-family:var(--display);font-weight:400;font-size:40px;margin:0}
+.catalog-head .count{color:var(--muted)}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;align-items:start}
+.filters{position:sticky;top:96px;display:flex;flex-direction:column;gap:26px}
+.filters summary{display:none}
+.fgroup h3{font-size:15px;font-weight:700;margin:0 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px;min-height:40px}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.sizechip{min-width:48px;border-radius:6px;padding:8px 0;text-align:center}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.swatch{width:40px;height:40px;border-radius:50%;border:1px solid rgba(0,0,0,.18);padding:0;position:relative}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ground),0 0 0 4px var(--ink)}
+.check{display:flex;align-items:center;gap:10px;font-size:15px;min-height:40px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--brand)}
+select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);min-height:44px}
+.reset{background:none;border:0;text-decoration:underline;color:var(--muted);padding:0;align-self:flex-start;min-height:32px}
+
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 24px}
+.card{position:relative;display:flex;flex-direction:column;gap:10px}
+.card .ph{aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:#E8DFDA;position:relative}
+.card img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.card:hover img{transform:scale(1.03)}
+.card .hit{position:absolute;inset:0;background:none;border:0;border-radius:6px;z-index:2}
+.card .name{font-weight:600;font-size:16px;line-height:1.3;margin:0}
+.card .meta{font-size:14px;color:var(--muted);margin:0}
+.card .price{font-family:var(--display);font-size:22px;margin:0}
+.minisizes{display:flex;gap:4px;flex-wrap:wrap}
+.minisizes span{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:1px 6px;background:var(--surface)}
+.minisizes span.off{color:#A99A94;text-decoration:line-through;background:transparent}
+.soldout .ph img{opacity:.45}
+.badge{position:absolute;top:10px;left:10px;background:var(--ink);color:#fff;font-size:12px;padding:4px 10px;border-radius:999px;z-index:1}
+.noimg{width:100%;height:100%;display:grid;place-items:center;text-align:center;padding:20px;font-family:var(--display);font-size:20px;color:var(--muted)}
+.empty{grid-column:1/-1;padding:48px;background:var(--surface);border-radius:6px;text-align:center}
+
+/* dialogs */
+dialog{border:0;padding:0;background:var(--surface);color:var(--ink);max-width:min(960px,calc(100vw - 32px));width:100%;border-radius:8px}
+dialog::backdrop{background:rgba(43,29,26,.55)}
+.pd{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.pd .ph{background:#E8DFDA;aspect-ratio:3/4}
+.pd .ph img{width:100%;height:100%;object-fit:cover}
+.pd .info{padding:36px 32px;display:flex;flex-direction:column;gap:18px}
+.pd h2{font-family:var(--display);font-weight:400;font-size:32px;line-height:1.15;margin:0}
+.pd .price{font-family:var(--display);font-size:30px;margin:0}
+.pd dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0;font-size:15px}
+.pd dt{color:var(--muted)}
+.pd dd{margin:0}
+.sizes{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px}
+.sizes button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:8px 0;display:flex;flex-direction:column;align-items:center;min-height:56px}
+.sizes button small{font-size:11px;color:var(--muted)}
+.sizes button:hover:not([disabled]){border-color:var(--ink)}
+.sizes button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sizes button[aria-pressed="true"] small{color:#E6DAD4}
+.sizes button[disabled]{color:#B7AAA4;text-decoration:line-through;cursor:not-allowed;background:#FAF7F5}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.err{color:#9B1C1C;font-size:14px;margin:0;min-height:20px}
+.close{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.95);display:grid;place-items:center;z-index:3}
+.close:hover{background:#fff}
+
+dialog.drawer{margin:0 0 0 auto;height:100%;max-height:100%;max-width:440px;border-radius:0}
+.drawer-in{display:flex;flex-direction:column;height:100%}
+.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line)}
+.drawer-head h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0}
+.drawer-head .close{position:static;background:var(--ground)}
+.drawer-body{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:18px}
+.line-item{display:grid;grid-template-columns:72px 1fr auto;gap:14px;align-items:start}
+.line-item .th{width:72px;height:96px;border-radius:4px;overflow:hidden;background:#E8DFDA}
+.line-item .th img{width:100%;height:100%;object-fit:cover}
+.line-item p{margin:0;font-size:14px}
+.line-item .t{font-weight:600;font-size:15px}
+.qty{display:flex;align-items:center;gap:6px;margin-top:8px}
+.qty button{width:36px;height:36px;border:1px solid var(--line);background:var(--surface);border-radius:6px}
+.rm{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px;padding:4px 0}
+.drawer-foot{border-top:1px solid var(--line);padding:20px 24px;display:flex;flex-direction:column;gap:12px;background:var(--ground)}
+.total{display:flex;justify-content:space-between;font-size:18px;font-weight:700}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:14px;font-weight:600}
+.field input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:6px;min-height:44px;background:var(--surface)}
+.send{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.send .btn{padding:0 12px}
+.btn.viber{background:#665CAC;border-color:#665CAC}
+.btn.viber:hover{background:#544A94}
+.btn.tg{background:#1F6FA6;border-color:#1F6FA6}
+.btn.tg:hover{background:#185A88}
+.copy{background:none;border:0;text-decoration:underline;color:var(--muted);font-size:14px;padding:4px 0}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--ink);color:#fff;padding:12px 20px;border-radius:8px;z-index:100;transition:.25s;max-width:calc(100vw - 32px);font-size:15px;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+footer{background:var(--ink);color:#DCCFC9;padding:48px 0}
+footer .wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
+footer h3{font-family:var(--display);font-weight:400;color:#fff;font-size:22px;margin:0 0 12px}
+footer p{margin:0 0 6px;font-size:15px}
+footer a{color:#fff}
+
+@media (max-width:1024px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .layout{grid-template-columns:1fr}
+  .filters{position:static;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:0}
+  .filters summary{display:flex;justify-content:space-between;padding:14px 18px;font-weight:600;cursor:pointer;min-height:48px;align-items:center}
+  .filters .fbody{padding:0 18px 18px;display:flex;flex-direction:column;gap:22px}
+  .filters:not([open]) .fbody{display:none}
+}
+@media (min-width:1025px){ .filters .fbody{display:flex;flex-direction:column;gap:26px} }
+@media (max-width:760px){
+  .wrap{padding:0 16px}
+  nav.main{display:none}
+  header.site .wrap{justify-content:space-between;height:64px}
+  .logo{font-size:22px}
+  .hero{padding:36px 0 40px}
+  .hero .wrap{grid-template-columns:1fr;gap:32px}
+  .steps{height:300px;gap:10px}
+  .facts .wrap{grid-template-columns:1fr;gap:14px}
+  .grid{gap:24px 12px}
+  .card .price{font-size:19px}
+  .pd{grid-template-columns:1fr}
+  .pd .ph{aspect-ratio:4/3}
+  .pd .info{padding:24px 20px}
+  .sizes{grid-template-columns:repeat(3,minmax(0,1fr))}
+  footer .wrap{grid-template-columns:1fr}
+  dialog.drawer{max-width:100%}
+}
+
+/* additions */
+.search{position:relative}
+.search input{width:100%;font:inherit;padding:12px 14px 12px 42px;border:1px solid var(--line);border-radius:999px;background:var(--surface);min-height:46px}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.updated{font-size:14px;color:var(--muted)}
+.more{display:flex;justify-content:center;margin-top:40px}
+.chip small{color:inherit;opacity:.65;margin-left:4px}
+.gallery{display:flex;flex-direction:column;background:#E8DFDA}
+.gallery .main{aspect-ratio:3/4;overflow:hidden}
+.gallery .main img{width:100%;height:100%;object-fit:cover}
+.thumbs{display:flex;gap:6px;padding:8px;overflow-x:auto;background:var(--surface)}
+.thumbs button{flex:0 0 56px;height:72px;padding:0;border:2px solid transparent;border-radius:4px;overflow:hidden;background:#E8DFDA}
+.thumbs button[aria-current="true"]{border-color:var(--ink)}
+.thumbs img{width:100%;height:100%;object-fit:cover}
+.desc{white-space:pre-line;font-size:15px;color:var(--muted);margin:0;border-top:1px solid var(--line);padding-top:14px}
+.pd .ph{aspect-ratio:auto}
+@media (max-width:760px){ .gallery .main{aspect-ratio:1/1} }
+.topbar nav{display:flex;gap:20px;flex-wrap:wrap}
+.topbar nav a{font-weight:500;color:#EFE6E1}
+.terms{background:var(--surface);border-top:1px solid var(--line);padding:64px 0 72px}
+.terms h2{font-family:var(--display);font-weight:400;font-size:40px;margin:0 0 32px}
+.terms-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px}
+.terms h3{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 16px}
+.terms p{margin:0 0 12px;max-width:34em}
+.pay-opt{border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin-bottom:12px;background:var(--ground)}
+.pay-opt strong{display:block;margin-bottom:4px}
+.pay-opt p{margin:0;font-size:15px;color:var(--muted)}
+.terms ul{margin:0;padding-left:20px}
+.terms li{margin-bottom:8px}
+.payfield{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.payfield legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
+.payfield label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:6px;padding:12px;background:var(--surface);cursor:pointer;font-size:15px}
+.payfield label:has(input:checked){border-color:var(--ink)}
+.payfield input{width:18px;height:18px;margin-top:2px;accent-color:var(--brand);flex:0 0 auto}
+.payfield small{display:block;color:var(--muted);font-size:13px}
+.breakdown{font-size:15px;display:flex;flex-direction:column;gap:2px}
+.breakdown div{display:flex;justify-content:space-between}
+.pd-terms{font-size:14px;color:var(--muted);margin:0}
+@media (max-width:1024px){ .terms-grid{grid-template-columns:1fr;gap:32px} }
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <span>Доставка по всій Україні Новою Поштою</span>
+  <nav aria-label="Інформація для покупців"><a href="#terms">Оплата і доставка</a><a href="#returns">Обмін і повернення</a><a id="topPhone" href="#">[ваш номер телефону]</a></nav>
+</div></div>
+
+<header class="site"><div class="wrap">
+  <a class="logo" href="#top">Взуття на Висоті</a>
+  <nav class="main" aria-label="Категорії">
+    <button data-type="Чоботи">Чоботи</button>
+    <button data-type="Ботильйони">Ботильйони</button>
+    <button data-type="Черевики">Черевики</button>
+    <button data-type="Ботфорти">Ботфорти</button>
+    <button data-type="Туфлі">Туфлі</button>
+    <button data-type="Босоніжки та шльопанці">Босоніжки</button>
+    <button data-season="w">Зима</button>
+  </nav>
+  <button class="cart-btn" id="openCart" aria-label="Відкрити кошик">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+    <span>Кошик</span><span class="cart-count" id="cartCount">0</span>
+  </button>
+</div></header>
+
+<main id="top">
+  <section class="hero"><div class="wrap">
+    <div>
+      <h1>Взуття на&nbsp;Висоті</h1>
+      <p id="heroText">Жіночі чоботи, ботильйони, черевики, туфлі та босоніжки. Розміри 35–42, для кожного вказана довжина устілки.</p>
+      <a class="btn" href="#catalog">Перейти до каталогу</a>
+    </div>
+    <div class="steps" id="heroSteps" aria-hidden="true"></div>
+  </div></section>
+
+  <section class="facts" aria-label="Чому нам довіряють"><div class="wrap">
+    <div><strong>97% позитивних відгуків</strong>понад 800 відгуків покупців на Prom</div>
+    <div><strong>Розмір без вгадувань</strong>довжина устілки в сантиметрах для кожної моделі</div>
+    <div><strong>Замовлення за хвилину</strong>оберіть розмір і надішліть замовлення у Viber чи Telegram</div>
+  </div></section>
+
+  <section class="catalog" id="catalog"><div class="wrap">
+    <div class="catalog-head">
+      <div>
+        <h2>Каталог</h2>
+        <span class="updated" id="updated"></span>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <span class="count" id="count" aria-live="polite"></span>
+        <label for="sort" style="position:absolute;left:-9999px">Сортування</label>
+        <select id="sort">
+          <option value="new">Спочатку нові</option>
+          <option value="cheap">Спочатку дешевші</option>
+          <option value="exp">Спочатку дорожчі</option>
+        </select>
+      </div>
+    </div>
+    <div class="layout">
+      <details class="filters" id="filtersBox">
+        <summary>Фільтри <span id="fcount"></span></summary>
+        <div class="fbody">
+          <div class="search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <label for="q" style="position:absolute;left:-9999px">Пошук за назвою або артикулом</label>
+            <input id="q" type="search" placeholder="Назва або артикул" autocomplete="off">
+          </div>
+          <div class="fgroup"><h3>Тип</h3><div class="chips" id="fType"></div></div>
+          <div class="fgroup"><h3>Сезон</h3><div class="chips" id="fSeason"></div></div>
+          <div class="fgroup"><h3>Розмір</h3><div class="chips" id="fSize"></div></div>
+          <div class="fgroup"><h3>Висота каблука</h3><div class="chips" id="fHeel"></div></div>
+          <div class="fgroup"><h3>Колір</h3><div class="swatches" id="fColor"></div></div>
+          <div class="fgroup"><h3>Матеріал</h3><div class="chips" id="fMat"></div></div>
+          <label class="check"><input type="checkbox" id="fStock" checked> Тільки в наявності</label>
+          <button class="reset" id="reset">Скинути фільтри</button>
+        </div>
+      </details>
+      <div>
+        <div class="grid" id="grid"></div>
+        <div class="more" id="more"></div>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="terms" id="terms"><div class="wrap">
+    <h2>Оплата, доставка й повернення</h2>
+    <div class="terms-grid">
+      <div>
+        <h3>Як зручно оплатити</h3>
+        <div class="pay-opt">
+          <strong>Післяплата</strong>
+          <p>Передоплата 200 ₴, решту сплачуєте при отриманні на Новій Пошті. Якщо від посилки відмовитись на пошті, передоплата не повертається: вона покриває доставку та пакування.</p>
+        </div>
+        <div class="pay-opt">
+          <strong>Повна оплата онлайн</strong>
+          <p>Надішлемо посилання monobank на оплату: картою будь-якого банку, Apple Pay або Google Pay, без введення реквізитів.</p>
+        </div>
+        <div class="pay-opt">
+          <strong>Оплата частинами</strong>
+          <p>Покупка частинами від monobank: посилання на оформлення надішлемо в чаті. Кількість платежів і умови визначає банк.</p>
+        </div>
+        <p class="hint">Посилання на оплату надсилаємо після того, як підтвердимо наявність вашого розміру.</p>
+      </div>
+      <div>
+        <h3>Доставка</h3>
+        <p>Відправляємо Новою Поштою по всій Україні.</p>
+        <p>Термін відправки вашого замовлення підкажемо в чаті, коли підтвердимо наявність розміру.</p>
+      </div>
+      <div id="returns">
+        <h3>Обмін і повернення</h3>
+        <p>Взуття можна обміняти або повернути протягом 14 днів з дня отримання, якщо:</p>
+        <ul>
+          <li>збережено товарний вигляд: немає слідів носіння;</li>
+          <li>збережено коробку.</li>
+        </ul>
+        <p>Доставку при обміні та поверненні оплачує покупець. Щоб оформити обмін чи повернення, напишіть нам у Viber або Telegram.</p>
+      </div>
+    </div>
+  </div></section>
+</main>
+
+<footer><div class="wrap">
+  <div><h3>Взуття на Висоті</h3><p>Жіноче взуття з доставкою по Україні.</p></div>
+  <div><h3>Контакти</h3>
+    <p>Телефон: <a id="footPhone" href="#">[ваш номер]</a></p>
+    <p><span id="footMsg">Viber і Telegram: [ваш номер]</span></p>
+  </div>
+  <div><h3>Покупцям</h3><p>Оберіть модель і розмір, додайте в кошик і надішліть замовлення у месенджер. Ми відповімо та оформимо доставку.</p><p><a href="#terms">Оплата і доставка</a></p><p><a href="#returns">Обмін і повернення</a></p></div>
+</div></footer>
+
+<dialog id="pdDialog" aria-labelledby="pdTitle"><div id="pdBody" style="position:relative"></div></dialog>
+
+<dialog id="cartDialog" class="drawer" aria-labelledby="cartTitle"><div class="drawer-in">
+  <div class="drawer-head"><h2 id="cartTitle">Кошик</h2>
+    <button class="close" id="closeCart" aria-label="Закрити кошик"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="drawer-body" id="cartBody"></div>
+  <div class="drawer-foot" id="cartFoot"></div>
+</div></dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============ НАЛАШТУВАННЯ: контакти магазину ============ */
+const CONTACT = {
+  phone:    "+380993978807",   // показується на сайті
+  viber:    "+380993978807",   // номер для Viber
+  telegram: "+380993978807"    // номер або нікнейм у Telegram (без @)
+};
+/* ========================================================= */
+
+const DATA = /*__DATA__*/null;
+const PIC = f => /^https?:/.test(f) ? f : "https://backend.mydrop.com.ua/vendor/products/uploads/" + f;
+const P = DATA.products.map((r,i)=>({
+  id:String(r.i), art:r.a, name:r.n, type:r.t, season:r.s, color:r.c, mat:r.m, heel:r.h,
+  price:r.p, pics:(r.g||[]).map(PIC), sizes:r.z.map(z=>({s:z[0],cm:z[1],ok:!!z[2]})),
+  desc:r.d||"", order:i
+})).map(p=>(p.avail=p.sizes.some(z=>z.ok), p));
+const byId = Object.fromEntries(P.map(p=>[p.id,p]));
+
+const SEASON = {d:"Демісезон",w:"Зима",s:"Літо"};
+const COLORS = {"чорний":"#1D1A19","білий":"#FFFFFF","молочний":"#F3EDE2","бежевий":"#D8C2A4","пісок":"#C7A883","сірий":"#9A9793","шоколад":"#4A2C21","мокко":"#7B5B47","коричневий":"#8A5A3B","бордовий":"#6B1F2E","червоний":"#B3261E","рожевий":"#E8B4BC","зелений":"#5F7153","синій":"#3C5A8A","жовтий":"#E3C04F","золотий":"#C9A445","срібний":"#C4C6C8"};
+const MATGROUP = {"натуральна шкіра":"Шкіра","шкіра":"Шкіра","натуральна замша":"Замша","замша":"Замша","еко-шкіра":"Еко-шкіра","еко-замша":"Еко-замша","лак":"Лак","текстиль":"Текстиль"};
+const HEELS = [["low","До 3 см",0,3],["mid","3–6 см",3.01,6],["high","6–9 см",6.01,9],["top","Від 9 см",9.01,99]];
+const PAGE = 48;
+
+const fmt = n => Number(n).toLocaleString("uk-UA").replace(/\u00a0/g," ") + " ₴";
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = s => document.querySelector(s);
+const metaLine = p => [p.color, p.mat, p.heel ? "каблук " + String(p.heel).replace(".",",") + " см" : ""].filter(Boolean).join(", ");
+function img(src, alt){
+  return src
+    ? `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'Фото скоро'}))">`
+    : `<div class="noimg">Фото скоро</div>`;
+}
+
+/* ---------- contacts ---------- */
+const isPhone = v => /^\+?[\d\s()-]+$/.test(v);
+function applyContacts(){
+  if(CONTACT.phone){
+    const tel = "tel:" + CONTACT.phone.replace(/[^\d+]/g,"");
+    ["#topPhone","#footPhone"].forEach(s=>{ $(s).textContent = CONTACT.phone; $(s).href = tel; });
+  }
+  const tg = CONTACT.telegram ? (isPhone(CONTACT.telegram) ? CONTACT.telegram : "@" + CONTACT.telegram.replace(/^@/,"")) : "";
+  const m = [CONTACT.viber && "Viber " + CONTACT.viber, tg && "Telegram " + tg].filter(Boolean).join(", ");
+  if(m) $("#footMsg").textContent = m;
+}
+
+/* ---------- hero ---------- */
+(function hero(){
+  const picks = P.filter(p=>p.avail && p.pics.length && ["Чоботи","Ботильйони","Ботфорти"].includes(p.type)).slice(0,3);
+  $("#heroSteps").innerHTML = picks.map(p=>`<figure>${img(p.pics[0], p.name)}<figcaption>${esc(p.name)}</figcaption></figure>`).join("");
+  const n = P.filter(p=>p.avail).length;
+  $("#heroText").textContent = `Жіночі чоботи, ботильйони, черевики, туфлі та босоніжки: ${n} моделей у наявності. Розміри 35–42, для кожного вказана довжина устілки.`;
+  $("#updated").textContent = "Наявність і ціни на " + DATA.updated;
+})();
+
+/* ---------- filters ---------- */
+const F = {q:"", types:new Set(), season:"all", colors:new Set(), sizes:new Set(), heels:new Set(), mats:new Set(), stock:true, sort:"new"};
+let shown = PAGE;
+const TYPES = [...new Set(P.map(p=>p.type))].sort((a,b)=>P.filter(p=>p.type===b).length - P.filter(p=>p.type===a).length);
+const COLOR_LIST = Object.keys(COLORS).filter(c=>P.some(p=>p.color===c));
+const MAT_LIST = [...new Set(Object.values(MATGROUP))].filter(m=>P.some(p=>MATGROUP[p.mat]===m));
+const SIZE_LIST = [35,36,37,38,39,40,41,42];
+
+function chip(label, pressed, attrs, cls="chip"){ return `<button class="${cls}" aria-pressed="${pressed}" ${attrs}>${label}</button>`; }
+function renderFilters(){
+  const base = P.filter(p=>!F.stock || p.avail);
+  $("#fType").innerHTML = TYPES.map(t=>chip(`${esc(t)}<small>${base.filter(p=>p.type===t).length}</small>`,F.types.has(t),`data-ft="${esc(t)}"`)).join("");
+  $("#fSeason").innerHTML = [["all","Усі"],["d","Демісезон"],["w","Зима"],["s","Літо"]].map(([k,l])=>chip(l,F.season===k,`data-fs="${k}"`)).join("");
+  $("#fSize").innerHTML = SIZE_LIST.map(s=>chip(s,F.sizes.has(s),`data-fz="${s}"`,"chip sizechip")).join("");
+  $("#fHeel").innerHTML = HEELS.map(([k,l])=>chip(l,F.heels.has(k),`data-fh="${k}"`)).join("");
+  $("#fColor").innerHTML = COLOR_LIST.map(n=>`<button class="swatch" style="background:${COLORS[n]}" aria-pressed="${F.colors.has(n)}" data-fc="${n}" aria-label="${n}" title="${n}"></button>`).join("");
+  $("#fMat").innerHTML = MAT_LIST.map(m=>chip(m,F.mats.has(m),`data-fm="${m}"`)).join("");
+  $("#fStock").checked = F.stock;
+  const n = F.types.size + F.colors.size + F.sizes.size + F.heels.size + F.mats.size + (F.season!=="all"?1:0) + (F.q?1:0);
+  $("#fcount").textContent = n ? "(" + n + ")" : "";
+}
+const toggle = (set,v) => set.has(v) ? set.delete(v) : set.add(v);
+function changed(){ shown = PAGE; renderFilters(); renderGrid(); }
+$("#filtersBox").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  const d = b.dataset;
+  if(d.ft) toggle(F.types,d.ft);
+  else if(d.fs) F.season = d.fs;
+  else if(d.fc) toggle(F.colors,d.fc);
+  else if(d.fz) toggle(F.sizes,+d.fz);
+  else if(d.fh) toggle(F.heels,d.fh);
+  else if(d.fm) toggle(F.mats,d.fm);
+  else if(b.id==="reset"){ Object.assign(F,{q:"",season:"all",stock:true}); [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); $("#q").value=""; }
+  else return;
+  changed();
+});
+let qt;
+$("#q").addEventListener("input", e=>{ clearTimeout(qt); qt=setTimeout(()=>{ F.q = e.target.value.trim().toLowerCase(); changed(); },200); });
+$("#fStock").addEventListener("change", e=>{ F.stock = e.target.checked; changed(); });
+$("#sort").addEventListener("change", e=>{ F.sort = e.target.value; shown = PAGE; renderGrid(); });
+document.querySelector("nav.main").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.q=""; $("#q").value="";
+  if(b.dataset.type) F.types.add(b.dataset.type);
+  if(b.dataset.season) F.season = b.dataset.season;
+  changed();
+  $("#catalog").scrollIntoView();
+});
+
+/* ---------- grid ---------- */
+function filtered(){
+  const heelOk = h => [...F.heels].some(k=>{ const r=HEELS.find(x=>x[0]===k); return h!==null && h!==undefined && h>=r[2] && h<=r[3]; });
+  let list = P.filter(p=>{
+    if(F.stock && !p.avail) return false;
+    if(F.types.size && !F.types.has(p.type)) return false;
+    if(F.season!=="all" && p.season!==F.season) return false;
+    if(F.colors.size && !F.colors.has(p.color)) return false;
+    if(F.mats.size && !F.mats.has(MATGROUP[p.mat])) return false;
+    if(F.heels.size && !heelOk(p.heel)) return false;
+    if(F.sizes.size && !p.sizes.some(z=>F.sizes.has(z.s) && (z.ok || !F.stock))) return false;
+    if(F.q && !(p.name.toLowerCase().includes(F.q) || String(p.art).toLowerCase().includes(F.q) || p.color.includes(F.q))) return false;
+    return true;
+  });
+  const soldLast = (a,b)=>(!a.avail)-(!b.avail);
+  if(F.sort==="cheap") list.sort((a,b)=>soldLast(a,b)||a.price-b.price);
+  else if(F.sort==="exp") list.sort((a,b)=>soldLast(a,b)||b.price-a.price);
+  else list.sort((a,b)=>soldLast(a,b)||a.order-b.order);
+  return list;
+}
+function plural(n){ const a=n%10,b=n%100; if(a===1&&b!==11) return "модель"; if(a>=2&&a<=4&&(b<12||b>14)) return "моделі"; return "моделей"; }
+function renderGrid(){
+  const list = filtered();
+  $("#count").textContent = list.length + " " + plural(list.length);
+  if(!list.length){
+    $("#grid").innerHTML = `<div class="empty"><p>За цими фільтрами моделей немає. Спробуйте прибрати розмір, колір або висоту каблука.</p><button class="btn ghost" onclick="document.getElementById('reset').click()">Скинути фільтри</button></div>`;
+    $("#more").innerHTML = "";
+    return;
+  }
+  $("#grid").innerHTML = list.slice(0,shown).map(p=>`
+    <article class="card${p.avail?"":" soldout"}">
+      <div class="ph">${p.avail?"":'<span class="badge">Немає в наявності</span>'}${img(p.pics[0], p.name)}</div>
+      <button class="hit" data-open="${p.id}" aria-label="${esc(p.name)}, ${fmt(p.price)}"></button>
+      <p class="name">${esc(p.name)}</p>
+      <p class="meta">${esc(metaLine(p))}</p>
+      <div class="minisizes" aria-hidden="true">${p.sizes.map(z=>`<span class="${z.ok?"":"off"}">${z.s}</span>`).join("")}</div>
+      <p class="price">${fmt(p.price)}</p>
+    </article>`).join("");
+  const rest = list.length - shown;
+  $("#more").innerHTML = rest > 0 ? `<button class="btn ghost" id="moreBtn">Показати ще ${Math.min(rest,PAGE)} з ${rest}</button>` : "";
+}
+$("#grid").addEventListener("click", e=>{ const b=e.target.closest("[data-open]"); if(b) openProduct(b.dataset.open); });
+$("#more").addEventListener("click", e=>{ if(e.target.id==="moreBtn"){ shown += PAGE; renderGrid(); } });
+
+/* ---------- product dialog ---------- */
+let current = null, chosen = null;
+const pdDialog = $("#pdDialog");
+function openProduct(id){
+  current = byId[id]; chosen = null;
+  const p = current;
+  const thumbs = p.pics.length > 1 ? `<div class="thumbs">${p.pics.map((u,i)=>`<button data-pic="${i}" aria-label="Фото ${i+1}" aria-current="${i===0}">${img(u,"")}</button>`).join("")}</div>` : "";
+  $("#pdBody").innerHTML = `
+    <button class="close" data-close aria-label="Закрити"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="pd">
+      <div class="gallery"><div class="main" id="mainPic">${img(p.pics[0], p.name)}</div>${thumbs}</div>
+      <div class="info">
+        <h2 id="pdTitle">${esc(p.name)}</h2>
+        <p class="price">${fmt(p.price)}</p>
+        <dl>
+          ${p.color?`<dt>Колір</dt><dd>${esc(p.color)}</dd>`:""}
+          ${p.mat?`<dt>Матеріал</dt><dd>${esc(p.mat)}</dd>`:""}
+          ${p.heel!==null&&p.heel!==undefined?`<dt>Каблук</dt><dd>${p.heel?String(p.heel).replace(".",",")+" см":"без каблука"}</dd>`:""}
+          ${p.season?`<dt>Сезон</dt><dd>${SEASON[p.season]}</dd>`:""}
+          <dt>Артикул</dt><dd>${esc(p.art)}</dd>
+        </dl>
+        <div>
+          <p style="font-weight:600;margin:0 0 8px">Розмір</p>
+          <div class="sizes" role="group" aria-label="Оберіть розмір">
+            ${p.sizes.map(z=>`<button data-size="${z.s}" aria-pressed="false" ${z.ok?"":"disabled"} aria-label="Розмір ${z.s}${z.cm?", устілка "+z.cm+" см":""}${z.ok?"":", немає в наявності"}">${z.s}${z.cm?`<small>${z.cm.replace(".",",")} см</small>`:""}</button>`).join("")}
+          </div>
+          <p class="hint" style="margin-top:8px">Під розміром вказана довжина устілки. Виміряйте стопу й оберіть розмір, де устілка на 0,5–1 см довша.</p>
+        </div>
+        <p class="err" id="sizeErr" aria-live="polite"></p>
+        <button class="btn" id="addBtn" ${p.avail?"":"disabled"}>${p.avail?"Додати в кошик":"Немає в наявності"}</button>
+        <p class="pd-terms">Післяплата з передоплатою 200 ₴, оплата онлайн за посиланням monobank або частинами. Обмін і повернення протягом 14 днів. <a href="#terms" data-close>Детальніше</a></p>
+        ${p.desc?`<p class="desc">${esc(p.desc)}</p>`:""}
+      </div>
+    </div>`;
+  pdDialog.showModal();
+}
+pdDialog.addEventListener("click", e=>{
+  if(e.target===pdDialog || e.target.closest("[data-close]")) return pdDialog.close();
+  const t = e.target.closest("[data-pic]");
+  if(t){
+    const i = +t.dataset.pic;
+    $("#mainPic").innerHTML = img(current.pics[i], current.name);
+    pdDialog.querySelectorAll("[data-pic]").forEach(b=>b.setAttribute("aria-current", +b.dataset.pic===i));
+    return;
+  }
+  const s = e.target.closest("[data-size]");
+  if(s && !s.disabled){
+    chosen = +s.dataset.size;
+    pdDialog.querySelectorAll("[data-size]").forEach(b=>b.setAttribute("aria-pressed", +b.dataset.size===chosen));
+    $("#sizeErr").textContent = "";
+  }
+  if(e.target.closest("#addBtn")){
+    if(!chosen){ $("#sizeErr").textContent = "Оберіть розмір, щоб додати модель у кошик."; return; }
+    addToCart(current.id, chosen);
+    pdDialog.close();
+    openCart();
+  }
+});
+
+/* ---------- cart ---------- */
+let cart = [];
+try{ cart = JSON.parse(localStorage.getItem("vnv-cart2")||"[]").filter(i=>byId[i.id] && byId[i.id].sizes.some(z=>z.s===i.size && z.ok)); }catch(e){ cart = []; }
+const save = () => { try{ localStorage.setItem("vnv-cart2", JSON.stringify(cart)); }catch(e){} };
+function addToCart(id,size){
+  const f = cart.find(i=>i.id===id && i.size===size);
+  if(f) f.qty++; else cart.push({id,size,qty:1});
+  save(); updateCount();
+}
+function updateCount(){ $("#cartCount").textContent = cart.reduce((a,i)=>a+i.qty,0); }
+const cartTotal = () => cart.reduce((a,i)=>a+byId[i.id].price*i.qty,0);
+const cartDialog = $("#cartDialog");
+const customer = {name:"",phone:"",city:"",pay:"cod"};
+const PREPAY = 200;
+function openCart(){ renderCart(); cartDialog.showModal(); }
+$("#openCart").addEventListener("click", openCart);
+$("#closeCart").addEventListener("click", ()=>cartDialog.close());
+cartDialog.addEventListener("click", e=>{ if(e.target===cartDialog) cartDialog.close(); });
+
+function renderCart(){
+  if(!cart.length){
+    $("#cartBody").innerHTML = `<p>У кошику поки порожньо. Оберіть модель у каталозі, вкажіть розмір і додайте її сюди.</p>`;
+    $("#cartFoot").innerHTML = `<button class="btn" id="toCatalog">Перейти до каталогу</button>`;
+    return;
+  }
+  $("#cartBody").innerHTML = cart.map((i,idx)=>{
+    const p = byId[i.id];
+    return `<div class="line-item">
+      <div class="th">${img(p.pics[0], p.name)}</div>
+      <div>
+        <p class="t">${esc(p.name)}</p>
+        <p>${esc([p.color, "розмір " + i.size, "арт. " + p.art].filter(Boolean).join(", "))}</p>
+        <div class="qty">
+          <button data-dec="${idx}" aria-label="Зменшити кількість">−</button>
+          <span>${i.qty}</span>
+          <button data-inc="${idx}" aria-label="Збільшити кількість">+</button>
+        </div>
+        <button class="rm" data-rm="${idx}">Видалити</button>
+      </div>
+      <p style="font-weight:700;margin:0">${fmt(p.price*i.qty)}</p>
+    </div>`;
+  }).join("") + `
+    <div class="field"><label for="cName">Імʼя та прізвище</label><input id="cName" autocomplete="name" value="${esc(customer.name)}"></div>
+    <div class="field"><label for="cPhone">Телефон</label><input id="cPhone" type="tel" autocomplete="tel" placeholder="+380" value="${esc(customer.phone)}"></div>
+    <div class="field"><label for="cCity">Місто та відділення Нової Пошти</label><input id="cCity" placeholder="Київ, відділення 12" value="${esc(customer.city)}"></div>
+    <p class="hint">Ці поля необовʼязкові, але з ними ми оформимо доставку швидше.</p>
+    <fieldset class="payfield"><legend>Оплата</legend>
+      <label><input type="radio" name="pay" value="cod" ${customer.pay==="cod"?"checked":""}><span>Післяплата<small>Передоплата ${PREPAY} ₴, решта при отриманні. При відмові на пошті передоплата не повертається.</small></span></label>
+      <label><input type="radio" name="pay" value="card" ${customer.pay==="card"?"checked":""}><span>Повна оплата онлайн<small>Посилання monobank на оплату картою, Apple Pay чи Google Pay надішлемо в чаті.</small></span></label>
+      <label><input type="radio" name="pay" value="parts" ${customer.pay==="parts"?"checked":""}><span>Оплата частинами monobank<small>Посилання на оформлення надішлемо в чаті після підтвердження наявності.</small></span></label>
+    </fieldset>`;
+  $("#cartFoot").innerHTML = `
+    <div class="total"><span>Разом</span><span>${fmt(cartTotal())}</span></div>
+    <div class="breakdown" id="breakdown">${breakdown()}</div>
+    <p class="hint">Натисніть кнопку месенджера: відкриється чат з нами, а текст замовлення скопіюється автоматично.</p>
+    <div class="send">
+      <button class="btn viber" data-send="viber" ${CONTACT.viber?"":"disabled"}>Замовити у Viber</button>
+      <button class="btn tg" data-send="tg" ${CONTACT.telegram?"":"disabled"}>Замовити в Telegram</button>
+    </div>
+    <button class="copy" data-send="copy">Скопіювати текст замовлення</button>`;
+}
+function breakdown(){
+  const t = cartTotal();
+  return customer.pay==="cod"
+    ? `<div><span>Передоплата</span><span>${fmt(Math.min(PREPAY,t))}</span></div><div><span>При отриманні</span><span>${fmt(Math.max(t-PREPAY,0))}</span></div>`
+    : `<div><span>${customer.pay==="parts"?"Частинами через monobank":"Оплата онлайн"}</span><span>${fmt(t)}</span></div>`;
+}
+cartDialog.addEventListener("change", e=>{
+  if(e.target.name==="pay"){ customer.pay = e.target.value; $("#breakdown").innerHTML = breakdown(); }
+});
+cartDialog.addEventListener("input", e=>{
+  if(e.target.id==="cName") customer.name = e.target.value;
+  if(e.target.id==="cPhone") customer.phone = e.target.value;
+  if(e.target.id==="cCity") customer.city = e.target.value;
+});
+cartDialog.addEventListener("click", e=>{
+  const t = e.target.closest("button"); if(!t) return;
+  if(t.id==="toCatalog"){ cartDialog.close(); $("#catalog").scrollIntoView(); return; }
+  if(t.dataset.inc!==undefined){ cart[+t.dataset.inc].qty++; }
+  else if(t.dataset.dec!==undefined){ const i=cart[+t.dataset.dec]; i.qty>1 ? i.qty-- : cart.splice(+t.dataset.dec,1); }
+  else if(t.dataset.rm!==undefined){ cart.splice(+t.dataset.rm,1); }
+  else if(t.dataset.send){ return sendOrder(t.dataset.send); }
+  else return;
+  save(); updateCount(); renderCart();
+});
+
+function orderText(){
+  const lines = cart.map((i,n)=>{
+    const p = byId[i.id];
+    return `${n+1}. ${[p.name, p.color].filter(Boolean).join(", ")}, розмір ${i.size}, ${i.qty} шт., ${fmt(p.price*i.qty)} (арт. ${p.art})`;
+  });
+  const total = cartTotal();
+  const pay = customer.pay==="cod"
+    ? `післяплата (передоплата ${fmt(Math.min(PREPAY,total))}, при отриманні ${fmt(Math.max(total-PREPAY,0))})`
+    : customer.pay==="parts" ? `оплата частинами monobank (${fmt(total)})` : `повна оплата онлайн за посиланням monobank (${fmt(total)})`;
+  let t = "Добрий день! Хочу замовити:\n" + lines.join("\n") + "\n\nРазом: " + fmt(total) + "\nОплата: " + pay;
+  const c = [customer.name && "Імʼя: " + customer.name, customer.phone && "Телефон: " + customer.phone, customer.city && "Доставка: " + customer.city].filter(Boolean);
+  if(c.length) t += "\n\n" + c.join("\n");
+  return t;
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }
+  catch(e){
+    const ta = document.createElement("textarea"); ta.value = t; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    let ok=false; try{ ok = document.execCommand("copy"); }catch(_){}
+    ta.remove(); return ok;
+  }
+}
+async function sendOrder(kind){
+  const t = orderText();
+  const copied = await copyText(t);
+  if(kind==="copy"){ toast(copied ? "Текст замовлення скопійовано." : "Не вдалося скопіювати. Виділіть текст вручну."); return; }
+  toast(copied ? "Текст замовлення скопійовано. Якщо він не зʼявився в чаті, вставте його." : "Відкриваємо чат. Опишіть замовлення в повідомленні.");
+  const enc = encodeURIComponent(t);
+  if(kind==="viber"){
+    location.href = "viber://chat?number=" + encodeURIComponent(CONTACT.viber.replace(/[^\d+]/g,"")) + "&draft=" + enc;
+  } else {
+    const tg = CONTACT.telegram.replace(/^@/,"");
+    const phone = isPhone(tg);
+    window.open("https://t.me/" + (phone ? "+" + tg.replace(/\D/g,"") : tg + "?text=" + enc), "_blank", "noopener");
+  }
+}
+
+let tt;
+function toast(msg){ const el=$("#toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"),4200); }
+
+/* ---------- init ---------- */
+if(window.matchMedia("(min-width:1025px)").matches) $("#filtersBox").open = true;
+applyContacts(); renderFilters(); renderGrid(); updateCount();
+</script>
+</body>
+</html>
