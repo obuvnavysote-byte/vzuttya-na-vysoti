@@ -1,0 +1,29 @@
+
+name: Оновлення каталогу
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"   # кожні 2 години
+  workflow_dispatch:        # кнопка "Run workflow" для ручного запуску
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Зібрати каталог з вигрузки MyDrop
+        env:
+          FEED_URL: ${{ secrets.FEED_URL }}
+        run: python build.py --template template.html --out index.html
+      - name: Зберегти оновлення
+        run: |
+          git config user.name "catalog-bot"
+          git config user.email "catalog-bot@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || (git commit -m "Оновлення наявності та цін" && git push)
