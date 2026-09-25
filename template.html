@@ -230,6 +230,29 @@ footer a{color:#fff}
 .breakdown{font-size:15px;display:flex;flex-direction:column;gap:2px}
 .breakdown div{display:flex;justify-content:space-between}
 .pd-terms{font-size:14px;color:var(--muted);margin:0}
+.reviews{padding:64px 0 72px;border-top:1px solid var(--line)}
+.reviews-head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:32px}
+.reviews-head h2{font-family:var(--display);font-weight:400;font-size:40px;margin:0 0 8px}
+.rating{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:15px;flex-wrap:wrap}
+.rating strong{color:var(--ink);font-size:17px}
+.stars{display:inline-flex;gap:2px;color:var(--brand)}
+.rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;align-items:start}
+.rv{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.rv h3{font-size:17px;font-weight:700;margin:0}
+.rv p{margin:0}
+.rv .txt{font-size:15px;line-height:1.6}
+.rv .note{font-size:13px;color:var(--muted);font-style:italic}
+.rv .item{font-size:14px;color:var(--muted)}
+.rv .who{font-size:14px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:auto}
+.rv .who b{color:var(--ink);font-weight:600}
+.rv-tags{display:flex;flex-wrap:wrap;gap:6px}
+.rv-tags span{font-size:13px;background:var(--ground);border-radius:999px;padding:4px 10px}
+.rv.short{padding:18px 22px;gap:8px}
+.facts a{color:inherit;text-decoration:none}
+.facts a:hover strong{text-decoration:underline}
+.parts{font-size:13px;color:var(--muted);margin:-6px 0 0}
+.parts b{color:var(--ink);font-weight:600}
+.pd .parts{font-size:15px;margin:-10px 0 0}
 @media (max-width:1024px){ .terms-grid{grid-template-columns:1fr;gap:32px} }
 </style>
 </head>
@@ -237,7 +260,7 @@ footer a{color:#fff}
 
 <div class="topbar"><div class="wrap">
   <span>Доставка по всій Україні Новою Поштою</span>
-  <nav aria-label="Інформація для покупців"><a href="#terms">Оплата і доставка</a><a href="#returns">Обмін і повернення</a><a id="topPhone" href="#">[ваш номер телефону]</a></nav>
+  <nav aria-label="Інформація для покупців"><a href="#reviews">Відгуки</a><a href="#terms">Оплата і доставка</a><a href="#returns">Обмін і повернення</a><a id="topPhone" href="#">[ваш номер телефону]</a></nav>
 </div></div>
 
 <header class="site"><div class="wrap">
@@ -268,7 +291,7 @@ footer a{color:#fff}
   </div></section>
 
   <section class="facts" aria-label="Чому нам довіряють"><div class="wrap">
-    <div><strong>97% позитивних відгуків</strong>понад 800 відгуків покупців на Prom</div>
+    <div><a href="#reviews"><strong>97% позитивних відгуків</strong>понад 800 відгуків покупців на Prom</a></div>
     <div><strong>Розмір без вгадувань</strong>довжина устілки в сантиметрах для кожної моделі</div>
     <div><strong>Замовлення за хвилину</strong>оберіть розмір і надішліть замовлення у Viber чи Telegram</div>
   </div></section>
@@ -315,6 +338,17 @@ footer a{color:#fff}
     </div>
   </div></section>
 
+  <section class="reviews" id="reviews"><div class="wrap">
+    <div class="reviews-head">
+      <div>
+        <h2>Відгуки покупців</h2>
+        <div class="rating"><span class="stars" id="bigStars"></span><strong>97% позитивних</strong><span>понад 800 відгуків на Prom</span></div>
+      </div>
+      <a class="btn ghost" href="https://prom.ua/ua/c2563082-vzuttyanavusoti.html" target="_blank" rel="noopener">Усі відгуки на Prom</a>
+    </div>
+    <div class="rv-grid" id="rvGrid"></div>
+  </div></section>
+
   <section class="terms" id="terms"><div class="wrap">
     <h2>Оплата, доставка й повернення</h2>
     <div class="terms-grid">
@@ -330,7 +364,7 @@ footer a{color:#fff}
         </div>
         <div class="pay-opt">
           <strong>Оплата частинами</strong>
-          <p>Покупка частинами від monobank: посилання на оформлення надішлемо в чаті. Кількість платежів і умови визначає банк.</p>
+          <p>Покупка частинами від monobank на 3 платежі: перший платіж при оформленні, решта щомісяця. Оформлення підкажемо в чаті.</p>
         </div>
         <p class="hint">Посилання на оплату надсилаємо після того, як підтвердимо наявність вашого розміру.</p>
       </div>
@@ -405,6 +439,34 @@ function img(src, alt){
   return src
     ? `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'Фото скоро'}))">`
     : `<div class="noimg">Фото скоро</div>`;
+}
+
+/* ---------- відгуки (справжні, з Prom) ---------- */
+const REVIEWS = [
+  {name:"Марина Р.", date:"25.09.2026", item:"козаки шоколадні замшеві, каблук 8 см", title:"Гарна якість, ціна бомба!", text:"Мега зручні, м'якенькі, невеликий стійкий каблук! Безмежна вдячна магазину за таку зручну пару 🥰 Я дуже задоволена 💗"},
+  {name:"Ліза", date:"17.06.2026", text:"Дуже хороший, чуйний, добрий продавець. На жаль, товар мені не підійшов за розміром, але ми швидко вирішили це питання. Доставка дуже швидка, все прийшло в посилці в ідеальному стані. Скоро обовʼязково ще щось тут куплю! 🔥", note:"Перекладено з російської", tags:["Актуальний опис","Швидко відправили","Ввічливий продавець"]},
+  {name:"Катерина", date:"17.08.2026", text:"Взуття дуже зручне, комфортне та неймовірно гарне 💗 Продавець ввічливий 👍 Дуже вдячна 💗", tags:["Актуальний опис","Швидко відправили","Ввічливий продавець"]},
+  {name:"Віта С.", date:"12.08.2026", item:"босоніжки жовті шкіряні, каблук 6 см", title:"Відповідає опису", text:"Босоніжки відповідають опису, дуже зручні."},
+  {name:"Ірина", date:"20.09.2026", tags:["Актуальний опис","Швидко відправили","Ввічливий продавець","Актуальна ціна","Товар був у наявності","Гарне обслуговування"]},
+  {name:"Наталія Н.", date:"19.09.2026", item:"жокейські чоботи чорні шкіряні", title:"Чудово"},
+  {name:"Анна В.", date:"20.09.2026", item:"лофери жовті замшеві", title:"Чудово"}
+];
+const STAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+function renderReviews(){
+  $("#bigStars").innerHTML = STAR.repeat(5);
+  $("#bigStars").setAttribute("aria-label","Оцінка 5 з 5");
+  $("#rvGrid").innerHTML = REVIEWS.map(r=>{
+    const short = !r.text;
+    return `<article class="rv${short?" short":""}">
+      <span class="stars" role="img" aria-label="5 з 5">${STAR.repeat(5)}</span>
+      ${r.title?`<h3>${esc(r.title)}</h3>`:""}
+      ${r.text?`<p class="txt">${esc(r.text)}</p>`:""}
+      ${r.note?`<p class="note">${esc(r.note)}</p>`:""}
+      ${r.tags?`<div class="rv-tags">${r.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
+      ${r.item?`<p class="item">Купила: ${esc(r.item)}</p>`:""}
+      <p class="who"><b>${esc(r.name)}</b>, ${esc(r.date)}</p>
+    </article>`;
+  }).join("");
 }
 
 /* ---------- contacts ---------- */
@@ -514,6 +576,7 @@ function renderGrid(){
       <p class="meta">${esc(metaLine(p))}</p>
       <div class="minisizes" aria-hidden="true">${p.sizes.map(z=>`<span class="${z.ok?"":"off"}">${z.s}</span>`).join("")}</div>
       <p class="price">${fmt(p.price)}</p>
+      <p class="parts">або <b>${PARTS} × ${fmt(perPart(p.price))}</b> частинами</p>
     </article>`).join("");
   const rest = list.length - shown;
   $("#more").innerHTML = rest > 0 ? `<button class="btn ghost" id="moreBtn">Показати ще ${Math.min(rest,PAGE)} з ${rest}</button>` : "";
@@ -535,6 +598,7 @@ function openProduct(id){
       <div class="info">
         <h2 id="pdTitle">${esc(p.name)}</h2>
         <p class="price">${fmt(p.price)}</p>
+        <p class="parts">або <b>${PARTS} платежі по ${fmt(perPart(p.price))}</b> з Покупкою частинами monobank</p>
         <dl>
           ${p.color?`<dt>Колір</dt><dd>${esc(p.color)}</dd>`:""}
           ${p.mat?`<dt>Матеріал</dt><dd>${esc(p.mat)}</dd>`:""}
@@ -551,7 +615,7 @@ function openProduct(id){
         </div>
         <p class="err" id="sizeErr" aria-live="polite"></p>
         <button class="btn" id="addBtn" ${p.avail?"":"disabled"}>${p.avail?"Додати в кошик":"Немає в наявності"}</button>
-        <p class="pd-terms">Післяплата з передоплатою 200 ₴, оплата онлайн за посиланням monobank або частинами. Обмін і повернення протягом 14 днів. <a href="#terms" data-close>Детальніше</a></p>
+        <p class="pd-terms">Післяплата з передоплатою 200 ₴, оплата онлайн за посиланням monobank або 3 платежі частинами. Обмін і повернення протягом 14 днів. <a href="#terms" data-close>Детальніше</a></p>
         ${p.desc?`<p class="desc">${esc(p.desc)}</p>`:""}
       </div>
     </div>`;
@@ -594,6 +658,8 @@ const cartTotal = () => cart.reduce((a,i)=>a+byId[i.id].price*i.qty,0);
 const cartDialog = $("#cartDialog");
 const customer = {name:"",phone:"",city:"",pay:"cod"};
 const PREPAY = 200;
+const PARTS = 3;   // кількість платежів у Покупці частинами monobank
+const perPart = n => Math.ceil(n / PARTS);
 function openCart(){ renderCart(); cartDialog.showModal(); }
 $("#openCart").addEventListener("click", openCart);
 $("#closeCart").addEventListener("click", ()=>cartDialog.close());
@@ -629,7 +695,7 @@ function renderCart(){
     <fieldset class="payfield"><legend>Оплата</legend>
       <label><input type="radio" name="pay" value="cod" ${customer.pay==="cod"?"checked":""}><span>Післяплата<small>Передоплата ${PREPAY} ₴, решта при отриманні. При відмові на пошті передоплата не повертається.</small></span></label>
       <label><input type="radio" name="pay" value="card" ${customer.pay==="card"?"checked":""}><span>Повна оплата онлайн<small>Посилання monobank на оплату картою, Apple Pay чи Google Pay надішлемо в чаті.</small></span></label>
-      <label><input type="radio" name="pay" value="parts" ${customer.pay==="parts"?"checked":""}><span>Оплата частинами monobank<small>Посилання на оформлення надішлемо в чаті після підтвердження наявності.</small></span></label>
+      <label><input type="radio" name="pay" value="parts" ${customer.pay==="parts"?"checked":""}><span>Оплата частинами monobank<small>${PARTS} платежі по ${fmt(perPart(cartTotal()))}. Оформлення підкажемо в чаті після підтвердження наявності.</small></span></label>
     </fieldset>`;
   $("#cartFoot").innerHTML = `
     <div class="total"><span>Разом</span><span>${fmt(cartTotal())}</span></div>
@@ -645,7 +711,7 @@ function breakdown(){
   const t = cartTotal();
   return customer.pay==="cod"
     ? `<div><span>Передоплата</span><span>${fmt(Math.min(PREPAY,t))}</span></div><div><span>При отриманні</span><span>${fmt(Math.max(t-PREPAY,0))}</span></div>`
-    : `<div><span>${customer.pay==="parts"?"Частинами через monobank":"Оплата онлайн"}</span><span>${fmt(t)}</span></div>`;
+    : (customer.pay==="parts" ? `<div><span>${PARTS} платежі частинами monobank</span><span>по ${fmt(perPart(t))}</span></div>` : `<div><span>Оплата онлайн</span><span>${fmt(t)}</span></div>`);
 }
 cartDialog.addEventListener("change", e=>{
   if(e.target.name==="pay"){ customer.pay = e.target.value; $("#breakdown").innerHTML = breakdown(); }
@@ -674,7 +740,7 @@ function orderText(){
   const total = cartTotal();
   const pay = customer.pay==="cod"
     ? `післяплата (передоплата ${fmt(Math.min(PREPAY,total))}, при отриманні ${fmt(Math.max(total-PREPAY,0))})`
-    : customer.pay==="parts" ? `оплата частинами monobank (${fmt(total)})` : `повна оплата онлайн за посиланням monobank (${fmt(total)})`;
+    : customer.pay==="parts" ? `частинами monobank, ${PARTS} платежі по ${fmt(perPart(total))} (разом ${fmt(total)})` : `повна оплата онлайн за посиланням monobank (${fmt(total)})`;
   let t = "Добрий день! Хочу замовити:\n" + lines.join("\n") + "\n\nРазом: " + fmt(total) + "\nОплата: " + pay;
   const c = [customer.name && "Імʼя: " + customer.name, customer.phone && "Телефон: " + customer.phone, customer.city && "Доставка: " + customer.city].filter(Boolean);
   if(c.length) t += "\n\n" + c.join("\n");
@@ -709,7 +775,7 @@ function toast(msg){ const el=$("#toast"); el.textContent=msg; el.classList.add(
 
 /* ---------- init ---------- */
 if(window.matchMedia("(min-width:1025px)").matches) $("#filtersBox").open = true;
-applyContacts(); renderFilters(); renderGrid(); updateCount();
+applyContacts(); renderReviews(); renderFilters(); renderGrid(); updateCount();
 </script>
 </body>
 </html>
