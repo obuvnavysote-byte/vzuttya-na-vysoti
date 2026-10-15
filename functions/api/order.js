@@ -2,7 +2,8 @@
 // Секрети задаються в Cloudflare: Settings -> Variables and Secrets
 //   TG_TOKEN    — токен Telegram-бота від @BotFather
 //   TG_CHAT_ID  — ваш Id з @userinfobot
-//   MONO_TOKEN  — токен інтернет-еквайрингу monobank
+//   MONO_TOKEN  — токен інтернет-еквайрингу monobank (необовʼязково: без нього
+//                 замовлення просто приходить у Telegram, а оплату ви надсилаєте самі)
 
 const PREPAY = 200;
 const PAY_LABEL = {
@@ -85,4 +86,78 @@ export async function onRequestPost({ request, env }) {
   ].join("\n");
   const sent = await telegram(env, text);
   if (!sent && !payUrl) {
-    return json({ error: "Не вдалося надіслати замовлення. Напишіть нам, будь ласка, у Viber або Telegram."
+    return json({ error: "Не вдалося надіслати замовлення. Напишіть нам, будь ласка, у Viber або Telegram." }, 502);
+  }
+
+  const message = toPay > 0
+    ? "Ми перевіримо наявність і надішлемо вам посилання на оплату найближчим часом."
+    : "Ми звʼяжемося з вами найближчим часом і допоможемо оформити покупку частинами.";
+  return json({ ok: true, order, payUrl, message });
+}
+
+// monobank повідомляє про зміну статусу. Статус перепитуємо в банку з нашим токеном,
+// тому підробити «оплачено» неможливо.
+async function monoHook(request, env) {
+  if (!env.MONO_TOKEN) return new Response("ok");
+  const body = await request.json().catch(() => ({}));
+  if (!body.invoiceId) return new Response("ok");
+  const r = await fetch(`https://api.monobank.ua/api/merchant/invoice/status?invoiceId=${encodeURIComponent(body.invoiceId)}`, {
+    headers: { "X-Token": env.MONO_TOKEN },
+  });
+  const d = await r.json().catch(() => ({}));
+  if (d.status === "success") {
+    await telegram(env, `✅ Оплачено замовлення ${d.reference || ""}: ${money((d.amount || 0) / 100)}`);
+  } else if (d.status === "failure") {
+    await telegram(env, `❌ Оплата не пройшла: замовлення ${d.reference || ""}`);
+  }
+  return new Response("ok");
+}
+
+export function onRequestGet() {
+  return json({ ok: true });
+}
+
+function findProduct(page, id) {
+  const start = page.indexOf(`{"i":${JSON.stringify(id)},`);
+  if (start < 0) return null;
+  let depth = 0, inStr = false;
+  for (let i = start; i < page.length; i++) {
+    const ch = page[i];
+    if (inStr) {
+      if (ch === "\\") i++;
+      else if (ch === '"') inStr = false;
+    } else if (ch === '"') inStr = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) {
+      try { return JSON.parse(page.slice(start, i + 1)); } catch { return null; }
+    }
+  }
+  return null;
+}
+
+async function telegram(env, text) {
+  if (!env.TG_TOKEN || !env.TG_CHAT_ID) return false;
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${env.TG_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: env.TG_CHAT_ID, text, disable_web_page_preview: true }),
+    });
+    return r.ok;
+  } catch { return false; }
+}
+
+function clean(v, max) {
+  return String(v || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max);
+}
+function money(n) {
+  return Math.round(n).toLocaleString("uk-UA").replace(/ /g, " ") + " ₴";
+}
+function orderNo() {
+  const d = new Date(Date.now() + 3 * 3600e3);
+  const p = (x) => String(x).padStart(2, "0");
+  return `VN-${p(d.getUTCDate())}${p(d.getUTCMonth() + 1)}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
+}
