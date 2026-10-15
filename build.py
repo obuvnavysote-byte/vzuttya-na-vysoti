@@ -253,8 +253,17 @@ def main():
     with open(a.template, encoding="utf-8") as f:
         tpl = f.read()
     assert "/*__DATA__*/null" in tpl, "У шаблоні немає мітки /*__DATA__*/null"
+    html_out = tpl.replace("/*__DATA__*/null", js)
+    # Короткий прайс на початку сторінки: сервер оформлення замовлень читає лише його,
+    # а не всю сторінку (так вкладаємось у ліміт процесора Cloudflare).
+    px = {p["i"]: [p["p"], p["a"], ", ".join(x for x in (p["n"], p["c"]) if x), [z[0] for z in p["z"] if z[2]]]
+          for p in products}
+    px_js = json.dumps(px, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    marker = '<meta charset="utf-8">'
+    if marker in html_out:
+        html_out = html_out.replace(marker, marker + '\n<script type="application/json" id="px">' + px_js + "</script>", 1)
     with open(a.out, "w", encoding="utf-8") as f:
-        f.write(tpl.replace("/*__DATA__*/null", js))
+        f.write(html_out)
     in_stock = sum(1 for p in products if any(z[2] for z in p["z"]))
     print(f"Готово: {len(products)} моделей, в наявності {in_stock} -> {a.out}")
 
