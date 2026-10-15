@@ -254,14 +254,22 @@ def main():
         tpl = f.read()
     assert "/*__DATA__*/null" in tpl, "У шаблоні немає мітки /*__DATA__*/null"
     html_out = tpl.replace("/*__DATA__*/null", js)
-    # Короткий прайс на початку сторінки: сервер оформлення замовлень читає лише його,
-    # а не всю сторінку (так вкладаємось у ліміт процесора Cloudflare).
-    px = {p["i"]: [p["p"], p["a"], ", ".join(x for x in (p["n"], p["c"]) if x), [z[0] for z in p["z"] if z[2]]]
-          for p in products}
-    px_js = json.dumps(px, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    marker = '<meta charset="utf-8">'
-    if marker in html_out:
-        html_out = html_out.replace(marker, marker + '\n<script type="application/json" id="px">' + px_js + "</script>", 1)
+    # Окремий маленький файл на кожну модель (p/<id>.json): сервер оформлення
+    # замовлень читає лише потрібні, а не весь каталог (ліміт процесора Cloudflare).
+    pdir = os.path.join(os.path.dirname(os.path.abspath(a.out)), "p")
+    os.makedirs(pdir, exist_ok=True)
+    keep = {"_ok.json"}
+    for p in products:
+        fn = re.sub(r"[^0-9A-Za-z_-]", "_", str(p["i"])) + ".json"
+        keep.add(fn)
+        rec = [p["p"], p["a"], ", ".join(x for x in (p["n"], p["c"]) if x), [z[0] for z in p["z"] if z[2]]]
+        with open(os.path.join(pdir, fn), "w", encoding="utf-8") as f:
+            json.dump(rec, f, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join(pdir, "_ok.json"), "w", encoding="utf-8") as f:
+        f.write('{"ok":1}')
+    for fn in os.listdir(pdir):
+        if fn not in keep:
+            os.remove(os.path.join(pdir, fn))
     with open(a.out, "w", encoding="utf-8") as f:
         f.write(html_out)
     in_stock = sum(1 for p in products if any(z[2] for z in p["z"]))
