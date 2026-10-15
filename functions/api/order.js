@@ -16,7 +16,16 @@ const PAY_LABEL = {
   parts: "оплата частинами monobank",
 };
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(ctx) {
+  try {
+    return await handlePost(ctx);
+  } catch (e) {
+    await telegram(ctx.env, `⚠️ Технічна помилка оформлення замовлення: ${e && e.message}`).catch(() => {});
+    return json({ error: "Технічна помилка на сайті. Напишіть нам, будь ласка, у Viber або Telegram." }, 500);
+  }
+}
+
+async function handlePost({ request, env }) {
   const url = new URL(request.url);
   if (url.searchParams.get("hook") === "mono") return monoHook(request, env);
   if (url.searchParams.get("hook") === "chast") return chastHook(request, env, url);
@@ -36,12 +45,12 @@ export async function onRequestPost({ request, env }) {
   if (!items.length) return json({ error: "Кошик порожній." }, 400);
 
   // Ціни й наявність беремо з опублікованого каталогу, а не з браузера покупця.
-  const page = await (await env.ASSETS.fetch(new URL("/", url))).text();
+  const catalog = await loadCatalog(env, url);
   const lines = [];
   const goods = [];
   let total = 0;
   for (const it of items) {
-    const p = findProduct(page, String(it.id));
+    const p = catalog(String(it.id));
     const size = parseInt(it.size, 10);
     const qty = Math.min(Math.max(parseInt(it.qty, 10) || 1, 1), 5);
     if (!p) return json({ error: "Однієї з моделей уже немає в каталозі. Оновіть сторінку." }, 409);
@@ -252,6 +261,34 @@ function page(inner) {
   return new Response(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Покупка частинами</title>
 <style>body{font-family:system-ui,sans-serif;max-width:520px;margin:40px auto;padding:0 16px;color:#2B1D1A;background:#F5EFEC;line-height:1.5}h1{font-size:24px}form{margin:12px 0}button{width:100%;min-height:52px;border:0;border-radius:999px;font-size:17px;font-weight:600;color:#fff;cursor:pointer}.ok{background:#5B1A2B}.no{background:#6B5B55}</style></head><body>${inner}</body></html>`,
     { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+// Читаємо з початку сторінки лише короткий прайс (<script id="px">), решту не завантажуємо.
+async function loadCatalog(env, url) {
+  const res = await env.ASSETS.fetch(new URL("/", url));
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  const START = '<script type="application/json" id="px">';
+  let text = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (value) text += dec.decode(value, { stream: !done });
+    const s = text.indexOf(START);
+    const e = s >= 0 ? text.indexOf("</script>", s) : -1;
+    if (e >= 0) {
+      reader.cancel().catch(() => {});
+      const px = JSON.parse(text.slice(s + START.length, e));
+      return (id) => {
+        const r = px[id];
+        return r ? { p: r[0], a: r[1], n: r[2], c: "", z: r[3].map((size) => [size, null, 1]) } : null;
+      };
+    }
+    // Стара сторінка без прайсу: якщо його немає на початку, шукаємо по всій сторінці.
+    if (done || (s < 0 && text.length > 4096 && !text.slice(0, 4096).includes(START.slice(0, 20)) && text.includes("<body"))) {
+      if (!done) for (;;) { const r = await reader.read(); if (r.value) text += dec.decode(r.value, { stream: !r.done }); if (r.done) break; }
+      return (id) => findProduct(text, id);
+    }
+  }
 }
 
 function findProduct(page, id) {
