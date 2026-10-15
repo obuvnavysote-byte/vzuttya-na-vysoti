@@ -50,7 +50,7 @@ async function handlePost({ request, env }) {
   const goods = [];
   let total = 0;
   for (const it of items) {
-    const p = catalog(String(it.id));
+    const p = await catalog(String(it.id));
     const size = parseInt(it.size, 10);
     const qty = Math.min(Math.max(parseInt(it.qty, 10) || 1, 1), 5);
     if (!p) return json({ error: "Однієї з моделей уже немає в каталозі. Оновіть сторінку." }, 409);
@@ -263,32 +263,26 @@ function page(inner) {
     { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
-// Читаємо з початку сторінки лише короткий прайс (<script id="px">), решту не завантажуємо.
+// Ціни беремо з маленьких файлів p/<id>.json (лише потрібні моделі, а не весь каталог).
+async function getJson(env, url, path) {
+  try {
+    const r = await env.ASSETS.fetch(new URL(path, url));
+    if (!r.ok) return null;
+    const t = await r.text();
+    if (t.charAt(0) !== "[" && t.charAt(0) !== "{") return null; // замість файлу віддали сторінку
+    return JSON.parse(t);
+  } catch { return null; }
+}
 async function loadCatalog(env, url) {
-  const res = await env.ASSETS.fetch(new URL("/", url));
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  const START = '<script type="application/json" id="px">';
-  let text = "";
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (value) text += dec.decode(value, { stream: !done });
-    const s = text.indexOf(START);
-    const e = s >= 0 ? text.indexOf("</script>", s) : -1;
-    if (e >= 0) {
-      reader.cancel().catch(() => {});
-      const px = JSON.parse(text.slice(s + START.length, e));
-      return (id) => {
-        const r = px[id];
-        return r ? { p: r[0], a: r[1], n: r[2], c: "", z: r[3].map((size) => [size, null, 1]) } : null;
-      };
-    }
-    // Стара сторінка без прайсу: якщо його немає на початку, шукаємо по всій сторінці.
-    if (done || (s < 0 && text.length > 4096 && !text.slice(0, 4096).includes(START.slice(0, 20)) && text.includes("<body"))) {
-      if (!done) for (;;) { const r = await reader.read(); if (r.value) text += dec.decode(r.value, { stream: !r.done }); if (r.done) break; }
-      return (id) => findProduct(text, id);
-    }
+  if (await getJson(env, url, "/p/_ok.json")) {
+    return async (id) => {
+      const r = await getJson(env, url, `/p/${id.replace(/[^0-9A-Za-z_-]/g, "_")}.json`);
+      return r ? { p: r[0], a: r[1], n: r[2], c: "", z: r[3].map((size) => [size, null, 1]) } : null;
+    };
   }
+  // Старий каталог без файлів p/: шукаємо по всій сторінці.
+  const page = await (await env.ASSETS.fetch(new URL("/", url))).text();
+  return async (id) => findProduct(page, id);
 }
 
 function findProduct(page, id) {
