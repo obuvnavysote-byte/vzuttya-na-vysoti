@@ -6,6 +6,8 @@
 //                 замовлення просто приходить у Telegram, а оплату ви надсилаєте самі)
 //   CHAST_STORE_ID — Store ID «Покупки частинами» monobank
 //   CHAST_SECRET   — секретний ключ (signKey) «Покупки частинами» monobank
+//   ADMIN_PASSWORD — ваш пароль до сторінки «Мої замовлення» (/api/order?orders=1)
+// Привʼязка (Bindings) KV namespace з назвою ORDERS — тут зберігаються всі замовлення.
 
 const PREPAY = 200;
 const PARTS = [3];
@@ -29,6 +31,7 @@ async function handlePost({ request, env }) {
   const url = new URL(request.url);
   if (url.searchParams.get("hook") === "mono") return monoHook(request, env);
   if (url.searchParams.get("hook") === "chast") return chastHook(request, env, url);
+  if (url.searchParams.get("orders")) return ordersPage(request, env, url);
   if (url.searchParams.get("admin")) return chastAdminAction(request, env, url);
 
   let body;
@@ -102,12 +105,13 @@ async function handlePost({ request, env }) {
     if (r.ok && r.data.order_id) {
       chast = r.data.order_id;
     } else {
-      await telegram(env, [
+      const why = `${r.status} ${clean(r.data.message || r.data.error || r.data.raw || "", 150)}`.trim();
+      const tg = await telegram(env, [
         `⚠️ Не вдалося створити заявку на покупку частинами ${order}`,
-        `Відповідь monobank: ${r.data.message || r.status}`,
+        `Відповідь monobank: ${why}`,
         "", ...lines, "", `Разом: ${money(total)}`, `👤 ${name}`, `📞 ${phone}`, `📦 ${city}`,
       ].join("\n"));
-      return json({ error: "monobank не прийняв заявку на покупку частинами. Перевірте, що вказано номер телефону, до якого привʼязаний monobank, і що ліміту достатньо. Або оберіть іншу оплату." }, 409);
+      return json({ error: `monobank не прийняв заявку на покупку частинами. Перевірте, що вказано номер телефону, до якого привʼязаний monobank, і що ліміту достатньо. Або оберіть іншу оплату. (код: ${why}${tg ? "" : "; tg-"})` }, 409);
     }
   }
 
@@ -128,8 +132,12 @@ async function handlePost({ request, env }) {
     `📞 ${phone}`,
     `📦 ${city}`,
   ].join("\n");
+  const saved = await saveOrder(env, {
+    o: order, t: Date.now(), n: name, ph: phone, c: city, sum: total, pay, toPay,
+    st: payUrl ? "очікує оплати" : chast ? "заявка в monobank" : "нове", items: lines, chast,
+  });
   const sent = await telegram(env, text);
-  if (!sent && !payUrl) {
+  if (!sent && !payUrl && !saved) {
     return json({ error: "Не вдалося надіслати замовлення. Напишіть нам, будь ласка, у Viber або Telegram." }, 502);
   }
 
@@ -151,6 +159,9 @@ async function monoHook(request, env) {
     headers: { "X-Token": env.MONO_TOKEN },
   });
   const d = await r.json().catch(() => ({}));
+  if (d.status === "success" || d.status === "failure") {
+    await setStatus(env, d.reference, d.status === "success" ? `✅ оплачено ${money((d.amount || 0) / 100)}` : "❌ оплата не пройшла");
+  }
   if (d.status === "success") {
     await telegram(env, `✅ Оплачено замовлення ${d.reference || ""}: ${money((d.amount || 0) / 100)}`);
   } else if (d.status === "failure") {
@@ -169,7 +180,10 @@ async function chastCall(env, path, payload) {
       headers: { "store-id": env.CHAST_STORE_ID, signature: await sign(body, env.CHAST_SECRET), "Content-Type": "application/json" },
       body,
     });
-    const data = await r.json().catch(() => ({}));
+    const raw = await r.text().catch(() => "");
+    let data;
+    try { data = JSON.parse(raw); } catch { data = { raw: raw.slice(0, 150) }; }
+    if (!data || typeof data !== "object") data = { raw: String(raw).slice(0, 150) };
     return { ok: r.ok && data.state !== "FAIL", status: r.status, data };
   } catch (e) {
     return { ok: false, status: 0, data: { message: "monobank недоступний" } };
@@ -185,6 +199,7 @@ async function chastHook(request, env, url) {
   let d = {};
   try { d = JSON.parse(raw); } catch { return new Response("ok"); }
   const order = clean(url.searchParams.get("order"), 20);
+  if (d.state || d.order_sub_state) await setStatus(env, order, d.order_sub_state === "WAITING_FOR_STORE_CONFIRM" ? "✅ клієнт підтвердив частини, треба підтвердити видачу" : d.state === "SUCCESS" ? "💰 частини завершено" : d.state === "FAIL" ? "❌ частини не оформлено" : `частини: ${d.state || ""} ${d.order_sub_state || ""}`);
   if (d.order_sub_state === "WAITING_FOR_STORE_CONFIRM") {
     await telegram(env, `✅ Клієнт підтвердив покупку частинами ${order}.\nКоли відправите замовлення, підтвердьте видачу товару (тоді monobank перерахує гроші):\n${await adminLink(env, url, d.order_id, order)}`);
   } else if (d.state === "FAIL") {
@@ -198,6 +213,7 @@ async function chastHook(request, env, url) {
 // Сторінка для власниці магазину: підтвердити видачу або скасувати заявку.
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
+  if (url.searchParams.get("orders")) return ordersPage(request, env, url);
   const id = url.searchParams.get("admin");
   if (!id) return json({ ok: true });
   if (!(await adminOk(env, url))) return page("Посилання недійсне.");
@@ -225,6 +241,97 @@ async function chastAdminAction(request, env, url) {
   return page(r.ok
     ? `<h1>${done}</h1><p>Замовлення ${order}.</p>`
     : `<h1>Не вийшло</h1><p>monobank відповів: ${esc(r.data.message || String(r.status))}</p><p>Можливо, клієнт ще не підтвердив заявку в застосунку.</p>`);
+}
+
+// ---------- Збереження замовлень і сторінка «Мої замовлення» ----------
+
+async function saveOrder(env, rec) {
+  if (!env.ORDERS) return false;
+  try {
+    const key = `o:${String(9e12 - rec.t).padStart(13, "0")}:${rec.o}`;
+    const meta = { o: rec.o, t: rec.t, n: rec.n.slice(0, 60), ph: rec.ph, sum: rec.sum, pay: rec.pay, st: rec.st };
+    await env.ORDERS.put(key, JSON.stringify(rec), { metadata: meta });
+    await env.ORDERS.put(`n:${rec.o}`, key);
+    return true;
+  } catch { return false; }
+}
+async function setStatus(env, order, st) {
+  if (!env.ORDERS || !order) return;
+  try {
+    const key = await env.ORDERS.get(`n:${order}`);
+    if (!key) return;
+    const { value, metadata } = await env.ORDERS.getWithMetadata(key);
+    if (!value) return;
+    const rec = JSON.parse(value);
+    rec.st = st;
+    await env.ORDERS.put(key, JSON.stringify(rec), { metadata: { ...(metadata || {}), st } });
+  } catch { /* статус не критичний */ }
+}
+
+async function tgCheck(env, send) {
+  if (!env.TG_TOKEN) return "❌ немає секрету TG_TOKEN";
+  if (!env.TG_CHAT_ID) return "❌ немає секрету TG_CHAT_ID";
+  try {
+    const me = await (await fetch(`https://api.telegram.org/bot${env.TG_TOKEN}/getMe`)).json();
+    if (!me.ok) return `❌ токен бота не працює: ${me.description || ""}`;
+    if (!send) return `бот @${me.result.username} працює (натисніть «Надіслати тест», щоб перевірити чат)`;
+    const r = await (await fetch(`https://api.telegram.org/bot${env.TG_TOKEN}/sendMessage`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: env.TG_CHAT_ID, text: "✅ Тест: сайт може надсилати вам замовлення." }),
+    })).json();
+    return r.ok ? `✅ тест надіслано боту @${me.result.username}` : `❌ бот @${me.result.username} не може написати вам: ${r.description || ""}`;
+  } catch (e) { return "❌ Telegram недоступний"; }
+}
+
+async function monoList(env) {
+  if (!env.MONO_TOKEN) return "<p>Немає секрету MONO_TOKEN.</p>";
+  try {
+    const from = Math.floor(Date.now() / 1000) - 30 * 86400;
+    const r = await fetch(`https://api.monobank.ua/api/merchant/statement?from=${from}`, { headers: { "X-Token": env.MONO_TOKEN } });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) return `<p>monobank відповів: ${esc(d.errText || d.errCode || r.status)}</p>`;
+    const list = (d.list || []).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    if (!list.length) return "<p>За 30 днів оплат через сайт немає.</p>";
+    const st = { success: "✅ оплачено", failure: "❌ не пройшла", reversed: "↩️ повернено", processing: "⏳ обробляється", created: "створено", expired: "прострочено" };
+    return list.map((x) => `<div class="row"><b>${esc(x.reference || "—")}</b> · ${money((x.amount || 0) / 100)} · ${esc(st[x.status] || x.status || "")}<br><small>${esc(kyivTime(x.date))} · картка ${esc(x.maskedPan || "")} · ${esc(x.destination || "")}</small></div>`).join("");
+  } catch { return "<p>monobank недоступний.</p>"; }
+}
+
+async function ordersPage(request, env, url) {
+  if (!env.ADMIN_PASSWORD) return page("<h1>Мої замовлення</h1><p>Спочатку додайте в Cloudflare секрет <b>ADMIN_PASSWORD</b> зі своїм паролем.</p>");
+  const form = request.method === "POST" ? await request.formData().catch(() => null) : null;
+  const pass = form ? String(form.get("pass") || "") : "";
+  const login = `<h1>Мої замовлення</h1><form method="post"><input name="pass" type="password" placeholder="Пароль" required autofocus><button class="ok">Увійти</button></form>`;
+  if (!form) return page(login);
+  if (pass !== env.ADMIN_PASSWORD) return page(login + "<p>Неправильний пароль.</p>");
+  const hidden = `<input type="hidden" name="pass" value="${esc(pass)}">`;
+  const tg = await tgCheck(env, form.get("test") === "1");
+  let orders = "<p>❌ Сховище замовлень не підключене (привʼязка KV з назвою ORDERS).</p>";
+  if (env.ORDERS) {
+    const l = await env.ORDERS.list({ prefix: "o:", limit: 100 });
+    orders = l.keys.length ? "" : "<p>Ще немає збережених замовлень.</p>";
+    const full = form.get("open");
+    for (const k of l.keys) {
+      const m = k.metadata || {};
+      let more = "";
+      if (full === m.o) {
+        const rec = JSON.parse((await env.ORDERS.get(k.name)) || "{}");
+        more = `<pre>${esc((rec.items || []).join("\n"))}\n\n📦 ${esc(rec.c || "")}</pre>`;
+      }
+      orders += `<div class="row"><b>${esc(m.o || "")}</b> · ${money(m.sum || 0)} · ${esc(PAY_LABEL[m.pay] || m.pay || "")}<br>${esc(m.st || "")}<br><small>${esc(kyivTime(m.t))} · 👤 ${esc(m.n || "")} · 📞 ${esc(m.ph || "")}</small>
+        <form method="post">${hidden}<input type="hidden" name="open" value="${esc(m.o || "")}"><button class="sm">Що замовили і куди</button></form>${more}</div>`;
+    }
+  }
+  return page(`<h1>Мої замовлення</h1>
+    <p>Telegram: ${esc(tg)}</p>
+    <form method="post">${hidden}<input type="hidden" name="test" value="1"><button class="sm">Надіслати тест у Telegram</button></form>
+    <h2>Замовлення з сайту</h2>${orders}
+    <h2>Оплати в monobank за 30 днів</h2>${await monoList(env)}`);
+}
+function kyivTime(t) {
+  const d = new Date(typeof t === "number" ? t : Date.parse(t));
+  if (isNaN(d)) return String(t || "");
+  return new Date(d.getTime() + 3 * 3600e3).toISOString().slice(0, 16).replace("T", " ");
 }
 
 async function adminLink(env, url, id, order) {
@@ -258,8 +365,8 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 function page(inner) {
-  return new Response(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Покупка частинами</title>
-<style>body{font-family:system-ui,sans-serif;max-width:520px;margin:40px auto;padding:0 16px;color:#2B1D1A;background:#F5EFEC;line-height:1.5}h1{font-size:24px}form{margin:12px 0}button{width:100%;min-height:52px;border:0;border-radius:999px;font-size:17px;font-weight:600;color:#fff;cursor:pointer}.ok{background:#5B1A2B}.no{background:#6B5B55}</style></head><body>${inner}</body></html>`,
+  return new Response(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Взуття на Висоті</title>
+<style>body{font-family:system-ui,sans-serif;max-width:520px;margin:40px auto;padding:0 16px;color:#2B1D1A;background:#F5EFEC;line-height:1.5}h1{font-size:24px}form{margin:12px 0}button{width:100%;min-height:52px;border:0;border-radius:999px;font-size:17px;font-weight:600;color:#fff;cursor:pointer}.ok{background:#5B1A2B}.no{background:#6B5B55}.sm{min-height:40px;font-size:15px;background:#5B1A2B;margin-top:8px}.row{background:#fff;border-radius:12px;padding:12px 14px;margin:10px 0}input[type=password]{width:100%;box-sizing:border-box;min-height:48px;font-size:17px;padding:0 14px;border:1px solid #ccc;border-radius:12px;margin-bottom:10px}pre{white-space:pre-wrap;font:inherit;font-size:14px}h2{font-size:19px;margin-top:28px}</style></head><body>${inner}</body></html>`,
     { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
