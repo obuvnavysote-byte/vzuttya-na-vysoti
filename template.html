@@ -229,6 +229,7 @@ footer a{color:#fff}
 .payfield small{display:block;color:var(--muted);font-size:13px}
 .breakdown{font-size:15px;display:flex;flex-direction:column;gap:2px}
 .breakdown div{display:flex;justify-content:space-between}
+.chast-legal{margin:16px 0 12px;padding:14px 16px;border:1px solid var(--line);border-radius:6px;font-size:14px}.chast-legal p{margin:0 0 6px}.chast-legal ul{margin:6px 0 0;padding-left:18px}.chast-legal li{margin-bottom:4px}.chast-more{font-size:13px;color:var(--muted);margin:-2px 0 4px}.chast-more summary{cursor:pointer;text-decoration:underline}.chast-more .chast-legal,.chast-more strong{display:block;margin:8px 0 4px}.chast-more ul{padding-left:18px;margin:4px 0}.chast-more p{margin:0 0 4px}
 .pd-terms{font-size:14px;color:var(--muted);margin:0}
 .reviews{padding:64px 0 72px;border-top:1px solid var(--line)}
 .reviews-head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:32px}
@@ -363,8 +364,23 @@ footer a{color:#fff}
           <p>Картою будь-якого банку, Apple Pay або Google Pay через захищену сторінку monobank одразу після оформлення замовлення.</p>
         </div>
         <div class="pay-opt">
-          <strong>Оплата частинами</strong>
-          <p>Покупка частинами від monobank на 3 платежі. Після оформлення замовлення ми звʼяжемося з вами й допоможемо її оформити.</p>
+          <strong>Покупка частинами</strong>
+          <p>Покупка частинами monobank на 3 платежі. Після оформлення замовлення підтвердіть покупку в застосунку monobank.</p>
+        </div>
+        <div class="chast-legal" id="chastLegal">
+          <strong>Покупка частинами monobank | Universal Bank</strong>
+          <p>Надавач послуг:</p>
+          <p>АТ «УНІВЕРСАЛ БАНК» ліцензія НБУ №92 від 20.01.1994, номер у держреєстрі банків №226.</p>
+          <p>Характеристики продукту:</p>
+          <ul>
+            <li>Мінімальна сума розстрочки: 2 грн</li>
+            <li>Максимальна сума розстрочки: 400 000 грн</li>
+            <li>Реальна річна процентна ставка: 0,000001%</li>
+            <li>Доступний строк, платежів: 3 - 25</li>
+            <li>Порядок погашення: щомісячні платежі рівними частинами</li>
+            <li>Перший платіж у момент оформлення покупки</li>
+            <li>Інформація про істотні характеристики продукту та попередження розміщені на сайті продукту <a href="https://chast.monobank.ua" target="_blank" rel="noopener">chast.monobank.ua</a></li>
+          </ul>
         </div>
         <p class="hint">Якщо раптом вашого розміру вже не буде в наявності, ми звʼяжемося з вами й повернемо оплату або запропонуємо заміну.</p>
       </div>
@@ -615,7 +631,7 @@ function openProduct(id){
         </div>
         <p class="err" id="sizeErr" aria-live="polite"></p>
         <button class="btn" id="addBtn" ${p.avail?"":"disabled"}>${p.avail?"Додати в кошик":"Немає в наявності"}</button>
-        <p class="pd-terms">Післяплата з передоплатою 200 ₴, оплата онлайн за посиланням monobank або 3 платежі частинами. Обмін і повернення протягом 14 днів. <a href="#terms" data-close>Детальніше</a></p>
+        <p class="pd-terms">Післяплата з передоплатою 200 ₴, оплата онлайн за посиланням monobank або Покупка частинами monobank на 3 платежі. Обмін і повернення протягом 14 днів. <a href="#terms" data-close>Детальніше</a></p>
         ${p.desc?`<p class="desc">${esc(p.desc)}</p>`:""}
       </div>
     </div>`;
@@ -695,7 +711,8 @@ function renderCart(){
     <fieldset class="payfield"><legend>Оплата</legend>
       <label><input type="radio" name="pay" value="cod" ${customer.pay==="cod"?"checked":""}><span>Післяплата<small>Передоплата ${PREPAY} ₴ онлайн зараз, решта при отриманні. При відмові на пошті передоплата не повертається.</small></span></label>
       <label><input type="radio" name="pay" value="card" ${customer.pay==="card"?"checked":""}><span>Повна оплата онлайн<small>Картою, Apple Pay або Google Pay через monobank.</small></span></label>
-      <label><input type="radio" name="pay" value="parts" ${customer.pay==="parts"?"checked":""}><span>Оплата частинами monobank<small>${PARTS} платежі по ${fmt(perPart(cartTotal()))}. Звʼяжемося після оформлення й допоможемо оформити.</small></span></label>
+      <label><input type="radio" name="pay" value="parts" ${customer.pay==="parts"?"checked":""}><span>Покупка частинами monobank<small>${PARTS} платежі по ${fmt(perPart(cartTotal()))}. Після оформлення підтвердіть покупку в застосунку monobank.</small></span></label>
+      <details class="chast-more"><summary>Умови Покупки частинами</summary>${document.getElementById("chastLegal").innerHTML}</details>
     </fieldset>`;
   $("#cartFoot").innerHTML = `
     <div class="total"><span>Разом</span><span>${fmt(cartTotal())}</span></div>
@@ -713,7 +730,7 @@ function breakdown(){
   const t = cartTotal();
   return customer.pay==="cod"
     ? `<div><span>Передоплата</span><span>${fmt(Math.min(PREPAY,t))}</span></div><div><span>При отриманні</span><span>${fmt(Math.max(t-PREPAY,0))}</span></div>`
-    : (customer.pay==="parts" ? `<div><span>${PARTS} платежі частинами monobank</span><span>по ${fmt(perPart(t))}</span></div>` : `<div><span>Оплата онлайн</span><span>${fmt(t)}</span></div>`);
+    : (customer.pay==="parts" ? `<div><span>${PARTS} платежі, Покупка частинами monobank</span><span>по ${fmt(perPart(t))}</span></div>` : `<div><span>Оплата онлайн</span><span>${fmt(t)}</span></div>`);
 }
 cartDialog.addEventListener("change", e=>{
   if(e.target.name==="pay"){ customer.pay = e.target.value; $("#breakdown").innerHTML = breakdown(); }
@@ -743,7 +760,7 @@ function orderText(){
   const total = cartTotal();
   const pay = customer.pay==="cod"
     ? `післяплата (передоплата ${fmt(Math.min(PREPAY,total))}, при отриманні ${fmt(Math.max(total-PREPAY,0))})`
-    : customer.pay==="parts" ? `частинами monobank, ${PARTS} платежі по ${fmt(perPart(total))} (разом ${fmt(total)})` : `повна оплата онлайн за посиланням monobank (${fmt(total)})`;
+    : customer.pay==="parts" ? `Покупка частинами monobank, ${PARTS} платежі по ${fmt(perPart(total))} (разом ${fmt(total)})` : `повна оплата онлайн за посиланням monobank (${fmt(total)})`;
   let t = "Добрий день! Хочу замовити:\n" + lines.join("\n") + "\n\nРазом: " + fmt(total) + "\nОплата: " + pay;
   const c = [customer.name && "Імʼя: " + customer.name, customer.phone && "Телефон: " + customer.phone, customer.city && "Доставка: " + customer.city].filter(Boolean);
   if(c.length) t += "\n\n" + c.join("\n");
