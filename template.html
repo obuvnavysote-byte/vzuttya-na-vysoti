@@ -70,6 +70,8 @@ nav.main button:hover{border-bottom-color:var(--sand)}
 .catalog-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:28px;flex-wrap:wrap}
 .catalog-head h2{font-family:var(--display);font-weight:400;font-size:40px;margin:0}
 .catalog-head .count{color:var(--muted)}
+.linkbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer}
+.linkbtn:hover{border-color:var(--ink)}
 .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:40px;align-items:start}
 .filters{position:sticky;top:96px;display:flex;flex-direction:column;gap:26px}
 .filters summary{display:none}
@@ -300,11 +302,12 @@ footer a{color:#fff}
   <section class="catalog" id="catalog"><div class="wrap">
     <div class="catalog-head">
       <div>
-        <h2>Новинки</h2>
+        <h2 id="catTitle">Новинки</h2>
         <span class="updated" id="updated"></span>
       </div>
       <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
         <span class="count" id="count" aria-live="polite"></span>
+        <button class="linkbtn" id="copyLink" type="button">🔗 Посилання на цю підбірку</button>
         <label for="sort" style="position:absolute;left:-9999px">Сортування</label>
         <select id="sort">
           <option value="new">Спочатку нові</option>
@@ -528,7 +531,7 @@ function renderFilters(){
   $("#fcount").textContent = n ? "(" + n + ")" : "";
 }
 const toggle = (set,v) => set.has(v) ? set.delete(v) : set.add(v);
-function changed(){ shown = PAGE; renderFilters(); renderGrid(); }
+function changed(){ shown = PAGE; renderFilters(); renderGrid(); syncUrl(); }
 $("#filtersBox").addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return;
   const d = b.dataset;
@@ -555,6 +558,54 @@ document.querySelector("nav.main").addEventListener("click", e=>{
   $("#catalog").scrollIntoView();
 });
 
+/* ---------- посилання на підбірки: /zyma, /botforty, /zyma/chobity/38, /m/<id> ---------- */
+const TYPE_SLUG = {"Чоботи":"chobity","Ботильйони":"botylony","Черевики":"cherevyky","Ботфорти":"botforty","Туфлі":"tufli",
+  "Босоніжки та шльопанці":"bosonizhky","Козаки":"kozaky","Уггі та дутики":"uggi","Кросівки та кеди":"krosivky",
+  "Лофери та балетки":"lofery","Аксесуари та догляд":"dohliad"};
+const SEASON_SLUG = {w:"zyma",d:"demisezon",s:"lito"};
+const SLUG_TYPE = Object.fromEntries(Object.entries(TYPE_SLUG).map(([k,v])=>[v,k]));
+const SLUG_SEASON = Object.fromEntries(Object.entries(SEASON_SLUG).map(([k,v])=>[v,k]));
+function filterPath(){
+  const seg = [];
+  if(F.season!=="all") seg.push(SEASON_SLUG[F.season]);
+  [...F.types].forEach(t=>TYPE_SLUG[t] && seg.push(TYPE_SLUG[t]));
+  [...F.sizes].sort((a,b)=>a-b).forEach(z=>seg.push(z));
+  const q = new URLSearchParams();
+  if(F.colors.size) q.set("color",[...F.colors].join(","));
+  if(F.mats.size) q.set("mat",[...F.mats].join(","));
+  if(F.heels.size) q.set("heel",[...F.heels].join(","));
+  if(F.q) q.set("q",F.q);
+  if(!F.stock) q.set("all","1");
+  const qs = q.toString();
+  return "/" + seg.join("/") + (qs ? "?" + qs : "");
+}
+function syncUrl(){ try{ history.replaceState(null,"",filterPath()); }catch(_){} }
+function applyUrl(){
+  const seg = decodeURIComponent(location.pathname).split("/").filter(Boolean).map(x=>x.toLowerCase());
+  if(seg[0]==="m" && seg[1]) return {product:seg[1]};
+  let any = false;
+  for(const x of seg){
+    if(SLUG_SEASON[x]){ F.season = SLUG_SEASON[x]; any = true; }
+    else if(SLUG_TYPE[x]){ F.types.add(SLUG_TYPE[x]); any = true; }
+    else if(/^\d{2}$/.test(x) && SIZE_LIST.includes(+x)){ F.sizes.add(+x); any = true; }
+  }
+  const q = new URLSearchParams(location.search);
+  const list = k => (q.get(k)||"").split(",").map(v=>v.trim()).filter(Boolean);
+  list("color").forEach(v=>{ F.colors.add(v); any = true; });
+  list("mat").forEach(v=>{ F.mats.add(v); any = true; });
+  list("heel").forEach(v=>{ F.heels.add(v); any = true; });
+  if(q.get("q")){ F.q = q.get("q").toLowerCase(); $("#q").value = q.get("q"); any = true; }
+  if(q.get("all")==="1") F.stock = false;
+  return {filters:any};
+}
+async function copyLink(url, btn){
+  const old = btn.textContent;
+  try{ await navigator.clipboard.writeText(url); btn.textContent = "Посилання скопійовано ✓"; }
+  catch(_){ window.prompt("Скопіюйте посилання:", url); }
+  setTimeout(()=>{ btn.textContent = old; }, 2000);
+}
+$("#copyLink").addEventListener("click", e=>copyLink(location.origin + filterPath(), e.currentTarget));
+
 /* ---------- grid ---------- */
 function filtered(){
   const heelOk = h => [...F.heels].some(k=>{ const r=HEELS.find(x=>x[0]===k); return h!==null && h!==undefined && h>=r[2] && h<=r[3]; });
@@ -576,8 +627,17 @@ function filtered(){
   return list;
 }
 function plural(n){ const a=n%10,b=n%100; if(a===1&&b!==11) return "модель"; if(a>=2&&a<=4&&(b<12||b>14)) return "моделі"; return "моделей"; }
+const SEASON_TITLE = {w:"Зимове взуття",d:"Демісезонне взуття",s:"Літнє взуття"};
+function catTitle(){
+  const t = [...F.types];
+  const parts = [];
+  if(t.length) parts.push(t.join(", "));
+  if(F.season!=="all") parts.push(t.length ? SEASON[F.season].toLowerCase() : SEASON_TITLE[F.season]);
+  return parts.length ? parts.join(" · ") : "Новинки";
+}
 function renderGrid(){
   const list = filtered();
+  $("#catTitle").textContent = catTitle();
   $("#count").textContent = list.length + " " + plural(list.length);
   if(!list.length){
     $("#grid").innerHTML = `<div class="empty"><p>За цими фільтрами моделей немає. Спробуйте прибрати розмір, колір або висоту каблука.</p><button class="btn ghost" onclick="document.getElementById('reset').click()">Скинути фільтри</button></div>`;
@@ -631,14 +691,18 @@ function openProduct(id){
         </div>
         <p class="err" id="sizeErr" aria-live="polite"></p>
         <button class="btn" id="addBtn" ${p.avail?"":"disabled"}>${p.avail?"Додати в кошик":"Немає в наявності"}</button>
+        <button class="linkbtn" id="copyModel" type="button">🔗 Посилання на цю модель</button>
         <p class="pd-terms">Післяплата з передоплатою 200 ₴, оплата онлайн за посиланням monobank або Покупка частинами monobank на 3 платежі. Обмін і повернення протягом 14 днів. <a href="#terms" data-close>Детальніше</a></p>
         ${p.desc?`<p class="desc">${esc(p.desc)}</p>`:""}
       </div>
     </div>`;
   pdDialog.showModal();
+  try{ history.replaceState(null,"","/m/" + encodeURIComponent(p.id)); }catch(_){}
 }
+pdDialog.addEventListener("close", ()=>{ if(location.pathname.startsWith("/m/")) syncUrl(); });
 pdDialog.addEventListener("click", e=>{
   if(e.target===pdDialog || e.target.closest("[data-close]")) return pdDialog.close();
+  if(e.target.closest("#copyModel")) return copyLink(location.origin + "/m/" + encodeURIComponent(current.id), e.target.closest("#copyModel"));
   const t = e.target.closest("[data-pic]");
   if(t){
     const i = +t.dataset.pic;
@@ -838,7 +902,10 @@ function orderReturn(){
 
 /* ---------- init ---------- */
 if(window.matchMedia("(min-width:1025px)").matches) $("#filtersBox").open = true;
+const fromUrl = applyUrl();
 applyContacts(); renderReviews(); renderFilters(); renderGrid(); updateCount(); orderReturn();
+if(fromUrl.product && byId[fromUrl.product]) openProduct(fromUrl.product);
+else if(fromUrl.filters) $("#catalog").scrollIntoView();
 </script>
 </body>
 </html>
