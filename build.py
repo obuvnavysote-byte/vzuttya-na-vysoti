@@ -238,6 +238,53 @@ def build(root):
     return products
 
 
+SITE = "https://vzuttyanavusoti.com"
+GCAT = {"Аксесуари та догляд": "Apparel & Accessories > Shoe Accessories"}
+
+
+def google_feed(products, path):
+    """Фід товарів для Google Merchant Center (google.xml): моделі в наявності."""
+    from xml.sax.saxutils import escape as x
+    pic = lambda f: f if re.match(r"https?://", f) else PIC_PREFIX + f
+    out = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel>',
+           "<title>Взуття на Висоті</title>", f"<link>{SITE}/</link>",
+           "<description>Жіноче взуття</description>"]
+    for p in products:
+        if not p["g"] or not p["p"]:
+            continue
+        title = p["n"]
+        if p["m"] and p["m"].split()[-1] not in title.lower():
+            title += ", " + p["m"]
+        desc = p["d"] or title
+        link = f"{SITE}/m/{p['i']}"
+        cat = GCAT.get(p["t"], "Apparel & Accessories > Shoes")
+        common = (
+            f"<g:title>{x(title[:150])}</g:title>"
+            f"<g:description>{x(desc[:4900])}</g:description>"
+            f"<g:link>{x(link)}</g:link>"
+            f"<g:image_link>{x(pic(p['g'][0]))}</g:image_link>"
+            + "".join(f"<g:additional_image_link>{x(pic(u))}</g:additional_image_link>" for u in p["g"][1:8])
+            + f"<g:price>{p['p']} UAH</g:price>"
+            "<g:condition>new</g:condition>"
+            "<g:brand>Взуття на Висоті</g:brand><g:identifier_exists>no</g:identifier_exists>"
+            f"<g:google_product_category>{x(cat)}</g:google_product_category>"
+            f"<g:product_type>{x(p['t'] or 'Взуття')}</g:product_type>"
+            "<g:gender>female</g:gender><g:age_group>adult</g:age_group>"
+            + (f"<g:color>{x(p['c'])}</g:color>" if p["c"] else "")
+            + (f"<g:material>{x(p['m'])}</g:material>" if p["m"] else "")
+        )
+        sizes = [str(z[0]) for z in p["z"] if z[2]]
+        if not sizes:
+            continue
+        out.append(
+            f"<item><g:id>{x(str(p['i']))}</g:id>{common}"
+            "<g:availability>in_stock</g:availability></item>")
+    out.append("</channel></rss>")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(out))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--feed", default=os.environ.get("FEED_URL"))
@@ -272,6 +319,7 @@ def main():
             os.remove(os.path.join(pdir, fn))
     with open(a.out, "w", encoding="utf-8") as f:
         f.write(html_out)
+    google_feed(products, os.path.join(os.path.dirname(os.path.abspath(a.out)), "google.xml"))
     in_stock = sum(1 for p in products if any(z[2] for z in p["z"]))
     print(f"Готово: {len(products)} моделей, в наявності {in_stock} -> {a.out}")
 
