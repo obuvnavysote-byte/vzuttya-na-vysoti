@@ -48,6 +48,20 @@ nav.main button{background:none;border:0;padding:8px 0;font-weight:500;white-spa
 nav.main button:hover{border-bottom-color:var(--sand)}
 .cart-btn{display:flex;align-items:center;gap:8px;background:var(--brand);color:#fff;border:0;border-radius:999px;padding:10px 18px;font-weight:600;min-height:44px}
 .cart-btn:hover{background:var(--brand-hover)}
+.fav-btn{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);margin-left:auto}
+.fav-btn:hover{border-color:var(--ink)}
+.fav-count[hidden]{display:none}
+@media (max-width:760px){ header.site .wrap{gap:10px} }
+@media (max-width:400px){ .cart-btn > span:not(.cart-count){display:none} .cart-btn{padding:10px 14px} .logo{font-size:20px} }
+.fav-btn[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.fav-count{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:999px;background:var(--brand);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.heart{position:absolute;top:8px;right:8px;z-index:3;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:var(--ink);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.heart[aria-pressed="true"]{color:var(--brand)}
+.heart[aria-pressed="true"] svg path{fill:currentColor}
+.pd-fav{display:inline-flex;align-items:center;gap:8px;margin-right:8px}
+.pd-fav[aria-pressed="true"]{color:var(--brand);border-color:var(--brand)}
+.pd-fav[aria-pressed="true"] svg path{fill:currentColor}
+
 .cart-count{background:#fff;color:var(--brand);border-radius:999px;min-width:22px;height:22px;display:grid;place-items:center;font-size:13px;padding:0 6px}
 
 /* hero */
@@ -301,6 +315,7 @@ footer a{color:#fff}
     <button data-type="Босоніжки та шльопанці">Босоніжки</button>
     <button data-season="w">Зима</button>
   </nav>
+  <button class="fav-btn" id="openFav" aria-label="Обране"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span class="fav-count" id="favCount" hidden>0</span></button>
   <button class="cart-btn" id="openCart" aria-label="Відкрити кошик">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
     <span>Кошик</span><span class="cart-count" id="cartCount">0</span>
@@ -553,7 +568,7 @@ function applyContacts(){
 })();
 
 /* ---------- filters ---------- */
-const F = {q:"", types:new Set(), season:"all", colors:new Set(), sizes:new Set(), heels:new Set(), mats:new Set(), stock:true, sort:"new"};
+const F = {q:"", types:new Set(), season:"all", colors:new Set(), sizes:new Set(), heels:new Set(), mats:new Set(), stock:true, sort:"new", fav:false};
 let shown = PAGE;
 const TYPES = [...new Set(P.map(p=>p.type))].sort((a,b)=>P.filter(p=>p.type===b).length - P.filter(p=>p.type===a).length);
 const COLOR_LIST = Object.keys(COLORS).filter(c=>P.some(p=>p.color===c));
@@ -574,7 +589,7 @@ function renderFilters(){
   $("#fcount").textContent = n ? "(" + n + ")" : "";
 }
 const toggle = (set,v) => set.has(v) ? set.delete(v) : set.add(v);
-function changed(){ shown = PAGE; renderFilters(); renderGrid(); syncUrl(); }
+function changed(){ shown = PAGE; renderFilters(); renderGrid(); syncUrl(); renderFavCount(); }
 $("#filtersBox").addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return;
   const d = b.dataset;
@@ -584,7 +599,7 @@ $("#filtersBox").addEventListener("click", e=>{
   else if(d.fz) toggle(F.sizes,+d.fz);
   else if(d.fh) toggle(F.heels,d.fh);
   else if(d.fm) toggle(F.mats,d.fm);
-  else if(b.id==="reset"){ Object.assign(F,{q:"",season:"all",stock:true}); [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); $("#q").value=""; }
+  else if(b.id==="reset"){ Object.assign(F,{q:"",season:"all",stock:true,fav:false}); [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); $("#q").value=""; }
   else return;
   changed();
 });
@@ -594,10 +609,36 @@ $("#fStock").addEventListener("change", e=>{ F.stock = e.target.checked; changed
 $("#sort").addEventListener("change", e=>{ F.sort = e.target.value; shown = PAGE; renderGrid(); });
 document.querySelector("nav.main").addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return;
-  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.q=""; $("#q").value="";
+  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.fav=false; F.q=""; $("#q").value="";
   if(b.dataset.type) F.types.add(b.dataset.type);
   if(b.dataset.season) F.season = b.dataset.season;
   changed();
+  $("#catalog").scrollIntoView();
+});
+
+/* ---------- обране (зберігається в браузері покупця) ---------- */
+let FAV = new Set();
+try{ FAV = new Set(JSON.parse(localStorage.getItem("vnv-fav")||"[]").filter(id=>byId[id])); }catch(_){ FAV = new Set(); }
+function saveFav(){ try{ localStorage.setItem("vnv-fav", JSON.stringify([...FAV])); }catch(_){} }
+function renderFavCount(){
+  const n = FAV.size, el = $("#favCount");
+  el.textContent = n; el.hidden = !n;
+  $("#openFav").setAttribute("aria-pressed", F.fav);
+  $("#openFav").setAttribute("aria-label", n ? `Обране: ${n}` : "Обране");
+}
+function toggleFav(id){
+  const on = !FAV.has(id);
+  on ? FAV.add(id) : FAV.delete(id);
+  saveFav(); renderFavCount();
+  document.querySelectorAll(`[data-fav="${CSS.escape(id)}"]`).forEach(b=>b.setAttribute("aria-pressed", on));
+  const pf = document.getElementById("pdFav");
+  if(pf && current && current.id===id){ pf.setAttribute("aria-pressed", on); pf.querySelector("span").textContent = on ? "В обраному" : "В обране"; }
+  if(F.fav && !on) renderGrid();
+  toast(on ? "Додано в обране ♡" : "Прибрано з обраного");
+}
+$("#openFav").addEventListener("click", ()=>{
+  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.q=""; $("#q").value="";
+  F.fav = true; changed(); renderFavCount();
   $("#catalog").scrollIntoView();
 });
 
@@ -625,7 +666,7 @@ function renderCats(){
 $("#catGrid").addEventListener("click", e=>{
   const a = e.target.closest(".cat"); if(!a) return;
   e.preventDefault();
-  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.q=""; $("#q").value="";
+  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.fav=false; F.q=""; $("#q").value="";
   if(a.dataset.catType) F.types.add(a.dataset.catType);
   if(a.dataset.catSeason) F.season = a.dataset.catSeason;
   changed();
@@ -684,6 +725,7 @@ $("#copyLink").addEventListener("click", e=>copyLink(location.origin + filterPat
 function filtered(){
   const heelOk = h => [...F.heels].some(k=>{ const r=HEELS.find(x=>x[0]===k); return h!==null && h!==undefined && h>=r[2] && h<=r[3]; });
   let list = P.filter(p=>{
+    if(F.fav) return FAV.has(p.id);
     if(F.stock && !p.avail) return false;
     if(F.types.size && !F.types.has(p.type)) return false;
     if(F.season!=="all" && p.season!==F.season) return false;
@@ -707,12 +749,18 @@ function catTitle(){
   const parts = [];
   if(t.length) parts.push(t.join(", "));
   if(F.season!=="all") parts.push(t.length ? SEASON[F.season].toLowerCase() : SEASON_TITLE[F.season]);
+  if(F.fav) return "Обране";
   return parts.length ? parts.join(" · ") : "Новинки";
 }
 function renderGrid(){
   const list = filtered();
   $("#catTitle").textContent = catTitle();
   $("#count").textContent = list.length + " " + plural(list.length);
+  if(!list.length && F.fav){
+    $("#grid").innerHTML = `<div class="empty"><p>В обраному поки нічого немає. Натисніть ♡ на фото моделі, щоб відкласти її сюди.</p><button class="btn ghost" onclick="document.getElementById('reset').click()">Дивитись усі моделі</button></div>`;
+    $("#more").innerHTML = "";
+    return;
+  }
   if(!list.length){
     $("#grid").innerHTML = `<div class="empty"><p>За цими фільтрами моделей немає. Спробуйте прибрати розмір, колір або висоту каблука.</p><button class="btn ghost" onclick="document.getElementById('reset').click()">Скинути фільтри</button></div>`;
     $("#more").innerHTML = "";
@@ -721,6 +769,7 @@ function renderGrid(){
   $("#grid").innerHTML = list.slice(0,shown).map(p=>`
     <article class="card${p.avail?"":" soldout"}">
       <div class="ph">${p.avail?(NEW_IDS.has(p.id)?'<span class="badge new">Новинка</span>':""):'<span class="badge">Немає в наявності</span>'}${img(p.pics[0], p.name)}</div>
+      <button class="heart" type="button" data-fav="${p.id}" aria-pressed="${FAV.has(p.id)}" aria-label="Додати в обране: ${esc(p.name)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></button>
       <button class="hit" data-open="${p.id}" aria-label="${esc(p.name)}, ${fmt(p.price)}"></button>
       <p class="name">${esc(p.name)}</p>
       <p class="meta">${esc(metaLine(p))}</p>
@@ -731,7 +780,10 @@ function renderGrid(){
   const rest = list.length - shown;
   $("#more").innerHTML = rest > 0 ? `<button class="btn ghost" id="moreBtn">Показати ще ${Math.min(rest,PAGE)} з ${rest}</button>` : "";
 }
-$("#grid").addEventListener("click", e=>{ const b=e.target.closest("[data-open]"); if(b) openProduct(b.dataset.open); });
+$("#grid").addEventListener("click", e=>{
+  const f=e.target.closest("[data-fav]"); if(f){ toggleFav(f.dataset.fav); return; }
+  const b=e.target.closest("[data-open]"); if(b) openProduct(b.dataset.open);
+});
 $("#more").addEventListener("click", e=>{ if(e.target.id==="moreBtn"){ shown += PAGE; renderGrid(); } });
 
 /* ---------- product dialog ---------- */
@@ -766,6 +818,7 @@ function openProduct(id){
         <p class="last-pair" id="lastPair" aria-live="polite"></p>
         <p class="err" id="sizeErr" aria-live="polite"></p>
         <button class="btn" id="addBtn" ${p.avail?"":"disabled"}>${p.avail?"Додати в кошик":"Немає в наявності"}</button>
+        <button class="linkbtn pd-fav" id="pdFav" type="button" aria-pressed="${FAV.has(p.id)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span>${FAV.has(p.id)?"В обраному":"В обране"}</span></button>
         <button class="linkbtn" id="copyModel" type="button">🔗 Посилання на цю модель</button>
         <p class="pd-terms">Післяплата з передоплатою 200 ₴, оплата онлайн за посиланням monobank або Покупка частинами monobank на 3 платежі. Обмін і повернення протягом 14 днів. <a href="#terms" data-close>Детальніше</a></p>
         ${p.desc?`<p class="desc">${esc(p.desc)}</p>`:""}
@@ -777,6 +830,7 @@ function openProduct(id){
 pdDialog.addEventListener("close", ()=>{ if(location.pathname.startsWith("/m/")) syncUrl(); });
 pdDialog.addEventListener("click", e=>{
   if(e.target===pdDialog || e.target.closest("[data-close]")) return pdDialog.close();
+  if(e.target.closest("#pdFav")) return toggleFav(current.id);
   if(e.target.closest("#copyModel")) return copyLink(location.origin + "/m/" + encodeURIComponent(current.id), e.target.closest("#copyModel"));
   const t = e.target.closest("[data-pic]");
   if(t){
@@ -987,7 +1041,7 @@ function orderReturn(){
 /* ---------- init ---------- */
 if(window.matchMedia("(min-width:1025px)").matches) $("#filtersBox").open = true;
 const fromUrl = applyUrl();
-applyContacts(); renderReviews(); renderCats(); renderFilters(); renderGrid(); updateCount(); orderReturn();
+applyContacts(); renderReviews(); renderCats(); renderFavCount(); renderFilters(); renderGrid(); updateCount(); orderReturn();
 if(fromUrl.product && byId[fromUrl.product]) openProduct(fromUrl.product);
 else if(fromUrl.filters) $("#catalog").scrollIntoView();
 </script>
