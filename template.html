@@ -51,6 +51,7 @@ nav.main button:hover{border-bottom-color:var(--sand)}
 .fav-btn{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);margin-left:auto}
 .fav-btn:hover{border-color:var(--ink)}
 .fav-count[hidden]{display:none}
+.rv-links{display:flex;flex-wrap:wrap;gap:10px}
 @media (max-width:760px){ header.site .wrap{gap:10px} }
 @media (max-width:400px){ .cart-btn > span:not(.cart-count){display:none} .cart-btn{padding:10px 14px} .logo{font-size:20px} }
 .fav-btn[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -301,7 +302,7 @@ footer a{color:#fff}
 
 <div class="topbar"><div class="wrap">
   <span class="usp">Доставка Новою Поштою по Україні · Покупка частинами monobank · Обмін і повернення</span>
-  <nav aria-label="Інформація для покупців"><a href="#reviews">Відгуки</a><a href="#terms">Оплата і доставка</a><a href="#returns">Обмін і повернення</a><a id="topPhone" href="#">[ваш номер телефону]</a></nav>
+  <nav aria-label="Інформація для покупців"><a href="#reviews">Відгуки</a><a href="#terms">Оплата і доставка</a><a href="#returns">Обмін і повернення</a><a href="https://www.instagram.com/vzuttya_na_vusoti/" target="_blank" rel="noopener">Instagram</a><a id="topPhone" href="#">[ваш номер телефону]</a></nav>
 </div></div>
 
 <header class="site"><div class="wrap">
@@ -392,7 +393,8 @@ footer a{color:#fff}
         <h2>Відгуки покупців</h2>
         <div class="rating"><span class="stars" id="bigStars"></span><strong>97% позитивних</strong><span>понад 800 відгуків на Prom</span></div>
       </div>
-      <a class="btn ghost" href="https://prom.ua/ua/c2563082-vzuttyanavusoti.html" target="_blank" rel="noopener">Усі відгуки на Prom</a>
+      <div class="rv-links"><a class="btn ghost" href="https://prom.ua/ua/c2563082-vzuttyanavusoti.html" target="_blank" rel="noopener">Усі відгуки на Prom</a>
+      <a class="btn ghost" href="https://www.instagram.com/vzuttya_na_vusoti/" target="_blank" rel="noopener">Ми в Instagram</a></div>
     </div>
     <div class="rv-grid" id="rvGrid"></div>
   </div></section>
@@ -456,6 +458,7 @@ footer a{color:#fff}
   <div><h3>Контакти</h3>
     <p>Телефон: <a id="footPhone" href="#">[ваш номер]</a></p>
     <p><span id="footMsg">Viber і Telegram: [ваш номер]</span></p>
+    <p>Instagram: <a href="https://www.instagram.com/vzuttya_na_vusoti/" target="_blank" rel="noopener">@vzuttya_na_vusoti</a></p>
     <p>Email: <a href="mailto:obuvnavysote@gmail.com">obuvnavysote@gmail.com</a></p>
     <p>Графік: Пн–Сб 9:00–18:00, Нд — вихідний</p>
   </div>
