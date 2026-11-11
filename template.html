@@ -74,6 +74,19 @@ nav.main button:hover{border-bottom-color:var(--sand)}
 .facts strong{display:block;color:var(--ink);font-size:17px;font-weight:600}
 
 /* catalog */
+.cats{padding:48px 0 8px}
+.cats h2{font-family:var(--display);font-weight:400;font-size:32px;margin:0 0 20px}
+.cat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.cat{position:relative;display:block;aspect-ratio:4/5;border-radius:8px;overflow:hidden;background:var(--surface);color:#fff;text-decoration:none}
+.cat img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.cat:hover img{transform:scale(1.04)}
+.cat span{position:absolute;left:0;right:0;bottom:0;padding:40px 16px 14px;background:linear-gradient(transparent,rgba(30,18,16,.72));font-family:var(--display);font-size:22px;line-height:1.2}
+.cat small{display:block;font-family:var(--body);font-size:13px;opacity:.9;margin-top:2px}
+.badge.new{background:var(--brand)}
+.last-pair{font-size:14px;color:var(--brand);font-weight:600;margin:6px 0 0;min-height:1em}
+.sizes button.low::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand);margin-top:3px}
+.sizes button.low[aria-pressed="true"]::after{background:#fff}
+@media (max-width:760px){ .cats{padding:32px 0 0} .cats h2{font-size:26px} .cat-grid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:40%;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;margin-right:-16px;padding-right:16px} .cat{scroll-snap-align:start} .cat span{font-size:18px;padding:32px 12px 10px} .topbar .usp{font-size:12px} }
 .catalog{padding:56px 0 80px}
 .catalog-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:28px;flex-wrap:wrap}
 .catalog-head h2{font-family:var(--display);font-weight:400;font-size:40px;margin:0}
@@ -169,6 +182,7 @@ dialog.drawer{margin:0 0 0 auto;height:100%;max-height:100%;max-width:440px;bord
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 footer{background:var(--ink);color:#DCCFC9;padding:48px 0}
+footer .wrap.seller{display:block;margin-top:28px;padding-top:18px;border-top:1px solid rgba(220,207,201,.25);font-size:13px;line-height:1.6;opacity:.85}
 footer .wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
 footer h3{font-family:var(--display);font-weight:400;color:#fff;font-size:22px;margin:0 0 12px}
 footer p{margin:0 0 6px;font-size:15px}
@@ -270,7 +284,7 @@ footer a{color:#fff}
 <body>
 
 <div class="topbar"><div class="wrap">
-  <span>Доставка по всій Україні Новою Поштою</span>
+  <span class="usp">Доставка Новою Поштою по Україні · Покупка частинами monobank · Обмін і повернення</span>
   <nav aria-label="Інформація для покупців"><a href="#reviews">Відгуки</a><a href="#terms">Оплата і доставка</a><a href="#returns">Обмін і повернення</a><a id="topPhone" href="#">[ваш номер телефону]</a></nav>
 </div></div>
 
@@ -304,7 +318,12 @@ footer a{color:#fff}
   <section class="facts" aria-label="Чому нам довіряють"><div class="wrap">
     <div><a href="#reviews"><strong>97% позитивних відгуків</strong>понад 800 відгуків покупців на Prom</a></div>
     <div><strong>Розмір без вгадувань</strong>довжина устілки в сантиметрах для кожної моделі</div>
-    <div><strong>Замовлення за хвилину</strong>оберіть розмір і надішліть замовлення у Viber чи Telegram</div>
+    <div><strong>Зручна оплата</strong>післяплата, картка онлайн або Покупка частинами monobank</div>
+  </div></section>
+
+  <section class="cats" aria-labelledby="catsTitle"><div class="wrap">
+    <h2 id="catsTitle">Категорії</h2>
+    <div class="cat-grid" id="catGrid"></div>
   </div></section>
 
   <section class="catalog" id="catalog"><div class="wrap">
@@ -418,9 +437,12 @@ footer a{color:#fff}
   <div><h3>Контакти</h3>
     <p>Телефон: <a id="footPhone" href="#">[ваш номер]</a></p>
     <p><span id="footMsg">Viber і Telegram: [ваш номер]</span></p>
+    <p>Email: <a href="mailto:obuvnavysote@gmail.com">obuvnavysote@gmail.com</a></p>
   </div>
-  <div><h3>Покупцям</h3><p>Оберіть модель і розмір, додайте в кошик і надішліть замовлення у месенджер. Ми відповімо та оформимо доставку.</p><p><a href="#terms">Оплата і доставка</a></p><p><a href="#returns">Обмін і повернення</a></p></div>
-</div></footer>
+  <div><h3>Покупцям</h3><p>Оберіть модель і розмір, додайте в кошик і оформіть замовлення: післяплата, оплата карткою або Покупка частинами monobank. Доставка Новою Поштою по Україні.</p><p><a href="#terms">Оплата і доставка</a></p><p><a href="#returns">Обмін і повернення</a></p></div>
+</div>
+<div class="wrap seller">Продавець: ФОП Рибалко Ірина Вікторівна · Телефон: +380 99 397 88 07 · Email: <a href="mailto:obuvnavysote@gmail.com">obuvnavysote@gmail.com</a> · Україна</div>
+</footer>
 
 <dialog id="pdDialog" aria-labelledby="pdTitle"><div id="pdBody" style="position:relative"></div></dialog>
 
@@ -447,10 +469,12 @@ const DATA = /*__DATA__*/null;
 const PIC = f => /^https?:/.test(f) ? f : "https://backend.mydrop.com.ua/vendor/products/uploads/" + f;
 const P = DATA.products.map((r,i)=>({
   id:String(r.i), art:r.a, name:r.n, type:r.t, season:r.s, color:r.c, mat:r.m, heel:r.h,
-  price:r.p, pics:(r.g||[]).map(PIC), sizes:r.z.map(z=>({s:z[0],cm:z[1],ok:!!z[2]})),
+  price:r.p, pics:(r.g||[]).map(PIC), sizes:r.z.map(z=>({s:z[0],cm:z[1],ok:!!z[2],q:+z[2]||0})),
   desc:r.d||"", order:i
 })).map(p=>(p.avail=p.sizes.some(z=>z.ok), p));
 const byId = Object.fromEntries(P.map(p=>[p.id,p]));
+/* «Новинка»: найновіші моделі в наявності (каталог уже відсортовано від нових) */
+const NEW_IDS = new Set(P.filter(p=>p.avail).slice(0,48).map(p=>p.id));
 
 const SEASON = {d:"Демісезон",w:"Зима",s:"Літо"};
 const COLORS = {"чорний":"#1D1A19","білий":"#FFFFFF","молочний":"#F3EDE2","бежевий":"#D8C2A4","пісок":"#C7A883","сірий":"#9A9793","шоколад":"#4A2C21","мокко":"#7B5B47","коричневий":"#8A5A3B","бордовий":"#6B1F2E","червоний":"#B3261E","рожевий":"#E8B4BC","зелений":"#5F7153","синій":"#3C5A8A","жовтий":"#E3C04F","золотий":"#C9A445","срібний":"#C4C6C8"};
@@ -571,6 +595,37 @@ document.querySelector("nav.main").addEventListener("click", e=>{
   $("#catalog").scrollIntoView();
 });
 
+/* ---------- плитки категорій ---------- */
+const CAT_TILES = [
+  {t:"Зимове взуття", season:"w", slug:"zyma"},
+  {t:"Чоботи", type:"Чоботи"},
+  {t:"Ботфорти", type:"Ботфорти"},
+  {t:"Ботильйони", type:"Ботильйони"},
+  {t:"Черевики", type:"Черевики"},
+  {t:"Уггі та дутики", type:"Уггі та дутики"},
+  {t:"Кросівки та кеди", type:"Кросівки та кеди"},
+  {t:"Туфлі", type:"Туфлі"},
+];
+function renderCats(){
+  const used = new Set();
+  $("#catGrid").innerHTML = CAT_TILES.map(c=>{
+    const list = P.filter(p=>p.avail && p.pics.length && (c.type ? p.type===c.type : p.season===c.season));
+    if(!list.length) return "";
+    const pick = list.find(p=>!used.has(p.id)) || list[0]; used.add(pick.id);
+    const href = "/" + (c.slug || TYPE_SLUG[c.type]);
+    return `<a class="cat" href="${href}" data-cat-type="${esc(c.type||"")}" data-cat-season="${c.season||""}">${img(pick.pics[0], c.t)}<span>${esc(c.t)}<small>${list.length} ${plural(list.length)}</small></span></a>`;
+  }).join("");
+}
+$("#catGrid").addEventListener("click", e=>{
+  const a = e.target.closest(".cat"); if(!a) return;
+  e.preventDefault();
+  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.q=""; $("#q").value="";
+  if(a.dataset.catType) F.types.add(a.dataset.catType);
+  if(a.dataset.catSeason) F.season = a.dataset.catSeason;
+  changed();
+  $("#catalog").scrollIntoView();
+});
+
 /* ---------- посилання на підбірки: /zyma, /botforty, /zyma/chobity/38, /m/<id> ---------- */
 const TYPE_SLUG = {"Чоботи":"chobity","Ботильйони":"botylony","Черевики":"cherevyky","Ботфорти":"botforty","Туфлі":"tufli",
   "Босоніжки та шльопанці":"bosonizhky","Козаки":"kozaky","Уггі та дутики":"uggi","Кросівки та кеди":"krosivky",
@@ -659,7 +714,7 @@ function renderGrid(){
   }
   $("#grid").innerHTML = list.slice(0,shown).map(p=>`
     <article class="card${p.avail?"":" soldout"}">
-      <div class="ph">${p.avail?"":'<span class="badge">Немає в наявності</span>'}${img(p.pics[0], p.name)}</div>
+      <div class="ph">${p.avail?(NEW_IDS.has(p.id)?'<span class="badge new">Новинка</span>':""):'<span class="badge">Немає в наявності</span>'}${img(p.pics[0], p.name)}</div>
       <button class="hit" data-open="${p.id}" aria-label="${esc(p.name)}, ${fmt(p.price)}"></button>
       <p class="name">${esc(p.name)}</p>
       <p class="meta">${esc(metaLine(p))}</p>
@@ -698,10 +753,11 @@ function openProduct(id){
         <div>
           <p style="font-weight:600;margin:0 0 8px">Розмір</p>
           <div class="sizes" role="group" aria-label="Оберіть розмір">
-            ${p.sizes.map(z=>`<button data-size="${z.s}" aria-pressed="false" ${z.ok?"":"disabled"} aria-label="Розмір ${z.s}${z.cm?", устілка "+z.cm+" см":""}${z.ok?"":", немає в наявності"}">${z.s}${z.cm?`<small>${z.cm.replace(".",",")} см</small>`:""}</button>`).join("")}
+            ${p.sizes.map(z=>`<button data-size="${z.s}" aria-pressed="false" ${z.ok?"":"disabled"} class="${z.ok&&z.q===1?"low":""}" aria-label="Розмір ${z.s}${z.cm?", устілка "+z.cm+" см":""}${z.ok?"":", немає в наявності"}">${z.s}${z.cm?`<small>${z.cm.replace(".",",")} см</small>`:""}</button>`).join("")}
           </div>
           <p class="hint" style="margin-top:8px">Під розміром вказана довжина устілки. Виміряйте стопу й оберіть розмір, де устілка на 0,5–1 см довша.</p>
         </div>
+        <p class="last-pair" id="lastPair" aria-live="polite"></p>
         <p class="err" id="sizeErr" aria-live="polite"></p>
         <button class="btn" id="addBtn" ${p.avail?"":"disabled"}>${p.avail?"Додати в кошик":"Немає в наявності"}</button>
         <button class="linkbtn" id="copyModel" type="button">🔗 Посилання на цю модель</button>
@@ -728,6 +784,8 @@ pdDialog.addEventListener("click", e=>{
     chosen = +s.dataset.size;
     pdDialog.querySelectorAll("[data-size]").forEach(b=>b.setAttribute("aria-pressed", +b.dataset.size===chosen));
     $("#sizeErr").textContent = "";
+    const z = current.sizes.find(x=>x.s===chosen);
+    $("#lastPair").textContent = z && z.q===1 ? "Залишилась остання пара цього розміру" : "";
   }
   if(e.target.closest("#addBtn")){
     if(!chosen){ $("#sizeErr").textContent = "Оберіть розмір, щоб додати модель у кошик."; return; }
@@ -923,7 +981,7 @@ function orderReturn(){
 /* ---------- init ---------- */
 if(window.matchMedia("(min-width:1025px)").matches) $("#filtersBox").open = true;
 const fromUrl = applyUrl();
-applyContacts(); renderReviews(); renderFilters(); renderGrid(); updateCount(); orderReturn();
+applyContacts(); renderReviews(); renderCats(); renderFilters(); renderGrid(); updateCount(); orderReturn();
 if(fromUrl.product && byId[fromUrl.product]) openProduct(fromUrl.product);
 else if(fromUrl.filters) $("#catalog").scrollIntoView();
 </script>

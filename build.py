@@ -214,8 +214,9 @@ def build(root):
                 except ValueError:
                     q = 0
                 ok = q > 0 or (off.findtext("available") or "").strip() == "true"
+                n = q if q > 0 else (5 if ok else 0)  # кількість пар; 5 = «є, кількість невідома»
                 prev = sizes.get(s)
-                sizes[s] = [s, cm or (prev[1] if prev else None), 1 if (ok or (prev and prev[2])) else 0]
+                sizes[s] = [s, cm or (prev[1] if prev else None), max(n, prev[2] if prev else 0)]
         if not sizes:
             continue
 
