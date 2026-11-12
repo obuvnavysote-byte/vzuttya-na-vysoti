@@ -349,9 +349,12 @@ def main():
             print(f"Додаткова вигрузка {i + 1} недоступна: {e}", file=sys.stderr)
             continue
         print(f"Вигрузка {i + 1}: {len(part)} моделей")
-        for p in part:
-            merged.setdefault(p["i"], p)
-    products = sorted(merged.values(), key=lambda p: int(re.sub(r"\D", "", p["i"]) or 0), reverse=True)
+        # Кожна вигрузка вже відсортована від нових; перемішуємо їх рівномірно,
+        # щоб новинки всіх постачальників були вгорі каталогу.
+        for n, p in enumerate(part):
+            if p["i"] not in merged:
+                merged[p["i"]] = ((n + 0.5) / len(part), i, p)
+    products = [p for _, _, p in sorted(merged.values(), key=lambda t: (t[0], t[1]))]
     kyiv = datetime.now(timezone.utc) + timedelta(hours=3)
     data = {"updated": kyiv.strftime("%d.%m.%Y, %H:%M"), "products": products}
     js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
