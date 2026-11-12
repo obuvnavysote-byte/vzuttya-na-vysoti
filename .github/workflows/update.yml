@@ -20,6 +20,8 @@ jobs:
       - name: Зібрати каталог з вигрузки MyDrop
         env:
           FEED_URL: ${{ secrets.FEED_URL }}
+          FEED_URL2: ${{ secrets.FEED_URL2 }}
+          FEED_URL3: ${{ secrets.FEED_URL3 }}
         run: python build.py --template template.html --out index.html
       - name: Зберегти оновлення
         run: |
