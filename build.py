@@ -7,7 +7,7 @@
 
 Якщо --feed не вказано, береться змінна оточення FEED_URL.
 """
-import argparse, html, json, os, re, sys, urllib.request
+import argparse, html, json, os, re, sys, urllib.parse, urllib.request
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
@@ -17,14 +17,15 @@ EMOJI = re.compile(r"[\U0001F000-\U0001FFFF\u2600-\u27BF\uFE0F\u200d]")
 BRANDS = re.compile(
     r"\b(в\s+стилі\s+\S+|міу|miu|balenciaga|баленсіага|hermes|гермес|bratz|loro\s*piana|"
     r"chanel|шанель|prada|прада|gucci|гучі|dior|діор|valentino|валентино|jacquemus|ysl|"
-    r"louboutin|лубутен|fendi|фенді|alaia|алая|bottega|боттега)\b", re.I)
+    r"louboutin|лубутен|fendi|фенді|alaia|алая|bottega|боттега|"
+    r"(?:тм\s+|від\s+)?(?:nikart|tapuli|lonza|allsy|andano|lizmar|monelli|nivelle|richesse|ricchi|roberto\s+netti|netti|olli\s+shoes))\b", re.I)
 FIXES = [
     (r"ботілььйон|ботільйон|ботилтйон", "ботильйон"), (r"круглмй", "круглий"),
     (r"плаформ", "платформ"), (r"демисезон", "демісезон"), (r"\bкабл\b\.?", "каблук"),
     (r"(\d)\s*см", r"\1 см"),
 ]
 TYPES = [
-    ("Аксесуари та догляд", r"засоби|догляд|спрей|шнур"),
+    ("Аксесуари та догляд", r"засоби|догляд|спрей|\bшнурки\b|\bшнурок\b"),
     ("Босоніжки та шльопанці", r"босоніж|шльопан|сабо|мюлі|сандал|в'єтнам|вʼєтнам"),
     ("Кросівки та кеди", r"кросів|снікер|\bкеди\b|\bкед\b"),
     ("Лофери та балетки", r"лофер|\bофер|клог|балетк|мокасин|сліпон"),
@@ -176,11 +177,39 @@ def parse_size(txt):
     return size, cm
 
 
-def build(root):
+# Для моделей сторонніх постачальників (не MyDrop) зі знижкою (є <oldprice>):
+# у вигрузці ціна зі знижкою без вашої націнки, тому додаємо її тут.
+SALE_MARKUP = 0.25  # +25% до ціни зі знижкою
+
+SIZE_PARAM = re.compile(r"розм|разм|size", re.I)
+FOOT_PARAM = re.compile(r"довжин|длин|устілк|стельк|стоп", re.I)
+COLOR_PARAM = re.compile(r"колір|цвет|color", re.I)
+
+
+def offer_sizes(off):
+    """Повертає [(розмір, см)] для пропозиції. Якщо є параметр «Розмір», беремо лише його."""
+    prms = list(off.iter("param"))
+    named = [p for p in prms if SIZE_PARAM.search(p.get("name") or "")]
+    foot = next((p.text for p in prms if FOOT_PARAM.search(p.get("name") or "") and p.text), None)
+    out = []
+    for prm in (named or prms):
+        s, cm = parse_size(prm.text)
+        if s is None:
+            continue
+        if not cm and foot:
+            m = re.search(r"\d{2}(?:[.,]\d)?", foot)
+            if m:
+                cm = m.group(0).replace(",", ".")
+                cm = cm if "." in cm else cm + ".0"
+        out.append((s, cm))
+    return out
+
+
+def build(root, prefix=""):
     cats = {c.get("id"): (c.text or "").strip() for c in root.iter("category")}
     groups = OrderedDict()
     for o in root.iter("offer"):
-        groups.setdefault(o.get("group_id") or o.get("id"), []).append(o)
+        groups.setdefault(prefix + (o.get("group_id") or o.get("id")), []).append(o)
 
     products = []
     for gid, offers in groups.items():
@@ -191,8 +220,18 @@ def build(root):
             price = 0
         if price <= 0:
             continue
+        try:
+            old = float(o.findtext("oldprice") or 0)
+        except ValueError:
+            old = 0
+        if prefix and old > price:
+            price = float(round(price * (1 + SALE_MARKUP) / 10) * 10)  # округлюємо до 10 ₴
+        old = old if old * 0.95 >= price else 0  # знижку менше 5% не показуємо
         raw = (o.findtext("name") or "").strip()
         name, code = clean_name(raw)
+        base = gid[len(prefix):]
+        if base.isdigit():  # назва на кшталт «Уггі … 11591», де число — код групи
+            name = re.sub(r"\s*\b" + base + r"\b\s*$", "", name).strip() or name
         if not name:
             continue
         cat = cats.get(o.findtext("categoryId"), "")
@@ -201,19 +240,19 @@ def build(root):
         text = raw + "\n" + desc
         color_line = re.search(r"колір\s*[:\-–]?\s*([^\n,.;]+)", desc, re.I)
         color = find_first(COLORS, raw) or (find_first(COLORS, color_line.group(1)) if color_line else "")
+        if not color:
+            cp = next((p.text for p in o.iter("param") if COLOR_PARAM.search(p.get("name") or "") and p.text), "")
+            color = find_first(COLORS, cp) if cp else ""
         pics = [p.text.strip().replace(PIC_PREFIX, "") for p in o.findall("picture") if p.text and p.text.strip()][:8]
 
         sizes = {}
         for off in offers:
-            for prm in off.iter("param"):
-                s, cm = parse_size(prm.text)
-                if s is None:
-                    continue
+            for s, cm in offer_sizes(off):
                 try:
                     q = int(float(off.findtext("quantity_in_stock") or 0))
                 except ValueError:
                     q = 0
-                ok = q > 0 or (off.findtext("available") or "").strip() == "true"
+                ok = q > 0 or (off.findtext("available") or off.get("available") or "").strip() == "true"
                 n = q if q > 0 else (5 if ok else 0)  # кількість пар; 5 = «є, кількість невідома»
                 prev = sizes.get(s)
                 sizes[s] = [s, cm or (prev[1] if prev else None), max(n, prev[2] if prev else 0)]
@@ -222,7 +261,7 @@ def build(root):
 
         products.append({
             "i": gid,
-            "a": (o.findtext("vendorCode") or "").strip() or code or gid,
+            "a": re.sub(r"-\d{2}$", "", (o.findtext("vendorCode") or "").strip()) or code or gid,
             "n": name,
             "t": typ,
             "s": season_of(raw, cat, desc, typ),
@@ -230,6 +269,7 @@ def build(root):
             "m": material_of(text),
             "h": heel_of(text, raw),
             "p": int(price) if price.is_integer() else price,
+            **({"o": int(old) if old.is_integer() else old} if old else {}),
             "g": pics,
             "z": [sizes[k] for k in sorted(sizes)],
             "d": desc,
@@ -266,8 +306,8 @@ def google_feed(products, path):
             f"<g:link>{x(link)}</g:link>"
             f"<g:image_link>{x(pic(p['g'][0]))}</g:image_link>"
             + "".join(f"<g:additional_image_link>{x(pic(u))}</g:additional_image_link>" for u in p["g"][1:8])
-            + f"<g:price>{p['p']} UAH</g:price>"
-            "<g:condition>new</g:condition>"
+            + (f"<g:price>{p['o']} UAH</g:price><g:sale_price>{p['p']} UAH</g:sale_price>" if p.get("o") else f"<g:price>{p['p']} UAH</g:price>")
+            + "<g:condition>new</g:condition>"
             "<g:brand>Взуття на Висоті</g:brand><g:identifier_exists>no</g:identifier_exists>"
             f"<g:google_product_category>{x(cat)}</g:google_product_category>"
             f"<g:product_type>{x(p['t'] or 'Взуття')}</g:product_type>"
@@ -294,7 +334,24 @@ def main():
     a = ap.parse_args()
     if not a.feed:
         sys.exit("Вкажіть --feed або змінну FEED_URL")
-    products = build(load_feed(a.feed))
+    # Основна вигрузка обовʼязкова; додаткові (FEED_URL2, FEED_URL3) — якщо задані.
+    # Якщо додаткова тимчасово недоступна, сайт оновлюється з рештою.
+    extra = [os.environ.get(k) for k in ("FEED_URL2", "FEED_URL3")]
+    merged = {}
+    for i, src in enumerate([a.feed] + [u for u in extra if u and u.strip()]):
+        try:
+            host = re.sub(r"^www\.", "", urllib.parse.urlparse(src.strip()).netloc)
+            prefix = "" if (i == 0 or "mydrop" in host or not host) else re.sub(r"[^a-z]", "", host)[:2]
+            part = build(load_feed(src.strip()), prefix)
+        except Exception as e:
+            if i == 0:
+                raise
+            print(f"Додаткова вигрузка {i + 1} недоступна: {e}", file=sys.stderr)
+            continue
+        print(f"Вигрузка {i + 1}: {len(part)} моделей")
+        for p in part:
+            merged.setdefault(p["i"], p)
+    products = sorted(merged.values(), key=lambda p: int(re.sub(r"\D", "", p["i"]) or 0), reverse=True)
     kyiv = datetime.now(timezone.utc) + timedelta(hours=3)
     data = {"updated": kyiv.strftime("%d.%m.%Y, %H:%M"), "products": products}
     js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")

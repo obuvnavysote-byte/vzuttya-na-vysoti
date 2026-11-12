@@ -98,6 +98,9 @@ nav.main button:hover{border-bottom-color:var(--sand)}
 .cat span{position:absolute;left:0;right:0;bottom:0;padding:40px 16px 14px;background:linear-gradient(transparent,rgba(30,18,16,.72));font-family:var(--display);font-size:22px;line-height:1.2}
 .cat small{display:block;font-family:var(--body);font-size:13px;opacity:.9;margin-top:2px}
 .badge.new{background:var(--brand)}
+.badge.sale{background:#B3261E}
+.price .old{font-family:var(--body);font-size:.62em;color:var(--muted);margin-right:4px}
+.price .now{color:#B3261E}
 .last-pair{font-size:14px;color:var(--brand);font-weight:600;margin:6px 0 0;min-height:1em}
 .sizes button.low::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand);margin-top:3px}
 .sizes button.low[aria-pressed="true"]::after{background:#fff}
@@ -415,6 +418,7 @@ footer a{color:#fff}
         <div class="pay-opt">
           <strong>Покупка частинами</strong>
           <p>Покупка частинами monobank на 3 платежі. Після оформлення замовлення підтвердіть покупку в застосунку monobank.</p>
+<p class="hint">Перед замовленням перевірте, чи вистачає ліміту: застосунок monobank → «Покупка частинами». Якщо ліміту замало, банк відхилить заявку, і ми запропонуємо інший спосіб оплати.</p>
         </div>
         <div class="chast-legal" id="chastLegal">
           <strong>Покупка частинами monobank | Universal Bank</strong>
@@ -493,11 +497,13 @@ const DATA = /*__DATA__*/null;
 const PIC = f => /^https?:/.test(f) ? f : "https://backend.mydrop.com.ua/vendor/products/uploads/" + f;
 const P = DATA.products.map((r,i)=>({
   id:String(r.i), art:r.a, name:r.n, type:r.t, season:r.s, color:r.c, mat:r.m, heel:r.h,
-  price:r.p, pics:(r.g||[]).map(PIC), sizes:r.z.map(z=>({s:z[0],cm:z[1],ok:!!z[2],q:+z[2]||0})),
+  price:r.p, old:r.o||0, pics:(r.g||[]).map(PIC), sizes:r.z.map(z=>({s:z[0],cm:z[1],ok:!!z[2],q:+z[2]||0})),
   desc:r.d||"", order:i
 })).map(p=>(p.avail=p.sizes.some(z=>z.ok), p));
 const byId = Object.fromEntries(P.map(p=>[p.id,p]));
 /* «Новинка»: найновіші моделі в наявності (каталог уже відсортовано від нових) */
+const pct = p => Math.round((1 - p.price / p.old) * 100);
+const priceHTML = p => p.old ? `<s class="old">${fmt(p.old)}</s> <span class="now">${fmt(p.price)}</span>` : fmt(p.price);
 const NEW_IDS = new Set(P.filter(p=>p.avail).slice(0,48).map(p=>p.id));
 
 const SEASON = {d:"Демісезон",w:"Зима",s:"Літо"};
@@ -571,7 +577,7 @@ function applyContacts(){
 })();
 
 /* ---------- filters ---------- */
-const F = {q:"", types:new Set(), season:"all", colors:new Set(), sizes:new Set(), heels:new Set(), mats:new Set(), stock:true, sort:"new", fav:false};
+const F = {q:"", types:new Set(), season:"all", colors:new Set(), sizes:new Set(), heels:new Set(), mats:new Set(), stock:true, sort:"new", fav:false, sale:false};
 let shown = PAGE;
 const TYPES = [...new Set(P.map(p=>p.type))].sort((a,b)=>P.filter(p=>p.type===b).length - P.filter(p=>p.type===a).length);
 const COLOR_LIST = Object.keys(COLORS).filter(c=>P.some(p=>p.color===c));
@@ -602,7 +608,7 @@ $("#filtersBox").addEventListener("click", e=>{
   else if(d.fz) toggle(F.sizes,+d.fz);
   else if(d.fh) toggle(F.heels,d.fh);
   else if(d.fm) toggle(F.mats,d.fm);
-  else if(b.id==="reset"){ Object.assign(F,{q:"",season:"all",stock:true,fav:false}); [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); $("#q").value=""; }
+  else if(b.id==="reset"){ Object.assign(F,{q:"",season:"all",stock:true,fav:false,sale:false}); [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); $("#q").value=""; }
   else return;
   changed();
 });
@@ -612,7 +618,7 @@ $("#fStock").addEventListener("change", e=>{ F.stock = e.target.checked; changed
 $("#sort").addEventListener("change", e=>{ F.sort = e.target.value; shown = PAGE; renderGrid(); });
 document.querySelector("nav.main").addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return;
-  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.fav=false; F.q=""; $("#q").value="";
+  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.fav=false; F.sale=false; F.q=""; $("#q").value="";
   if(b.dataset.type) F.types.add(b.dataset.type);
   if(b.dataset.season) F.season = b.dataset.season;
   changed();
@@ -641,12 +647,13 @@ function toggleFav(id){
 }
 $("#openFav").addEventListener("click", ()=>{
   [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.q=""; $("#q").value="";
-  F.fav = true; changed(); renderFavCount();
+  F.sale = false; F.fav = true; changed(); renderFavCount();
   $("#catalog").scrollIntoView();
 });
 
 /* ---------- плитки категорій ---------- */
 const CAT_TILES = [
+  {t:"Знижки", sale:true, slug:"znyzhky"},
   {t:"Зимове взуття", season:"w", slug:"zyma"},
   {t:"Чоботи", type:"Чоботи"},
   {t:"Ботфорти", type:"Ботфорти"},
@@ -659,19 +666,20 @@ const CAT_TILES = [
 function renderCats(){
   const used = new Set();
   $("#catGrid").innerHTML = CAT_TILES.map(c=>{
-    const list = P.filter(p=>p.avail && p.pics.length && (c.type ? p.type===c.type : p.season===c.season));
+    const list = P.filter(p=>p.avail && p.pics.length && (c.sale ? p.old : c.type ? p.type===c.type : p.season===c.season));
     if(!list.length) return "";
     const pick = list.find(p=>!used.has(p.id)) || list[0]; used.add(pick.id);
     const href = "/" + (c.slug || TYPE_SLUG[c.type]);
-    return `<a class="cat" href="${href}" data-cat-type="${esc(c.type||"")}" data-cat-season="${c.season||""}">${img(pick.pics[0], c.t)}<span>${esc(c.t)}<small>${list.length} ${plural(list.length)}</small></span></a>`;
+    return `<a class="cat" href="${href}" data-cat-type="${esc(c.type||"")}" data-cat-season="${c.season||""}" data-cat-sale="${c.sale?1:""}">${img(pick.pics[0], c.t)}<span>${esc(c.t)}<small>${list.length} ${plural(list.length)}</small></span></a>`;
   }).join("");
 }
 $("#catGrid").addEventListener("click", e=>{
   const a = e.target.closest(".cat"); if(!a) return;
   e.preventDefault();
-  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.fav=false; F.q=""; $("#q").value="";
+  [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.fav=false; F.sale=false; F.q=""; $("#q").value="";
   if(a.dataset.catType) F.types.add(a.dataset.catType);
   if(a.dataset.catSeason) F.season = a.dataset.catSeason;
+  if(a.dataset.catSale) F.sale = true;
   changed();
   $("#catalog").scrollIntoView();
 });
@@ -685,6 +693,7 @@ const SLUG_TYPE = Object.fromEntries(Object.entries(TYPE_SLUG).map(([k,v])=>[v,k
 const SLUG_SEASON = Object.fromEntries(Object.entries(SEASON_SLUG).map(([k,v])=>[v,k]));
 function filterPath(){
   const seg = [];
+  if(F.sale) seg.push("znyzhky");
   if(F.season!=="all") seg.push(SEASON_SLUG[F.season]);
   [...F.types].forEach(t=>TYPE_SLUG[t] && seg.push(TYPE_SLUG[t]));
   [...F.sizes].sort((a,b)=>a-b).forEach(z=>seg.push(z));
@@ -701,9 +710,11 @@ function syncUrl(){ try{ history.replaceState(null,"",filterPath()); }catch(_){}
 function applyUrl(){
   const seg = decodeURIComponent(location.pathname).split("/").filter(Boolean).map(x=>x.toLowerCase());
   if(seg[0]==="m" && seg[1]) return {product:seg[1]};
+  if(seg.includes("znyzhky")){ F.sale = true; }
   let any = false;
   for(const x of seg){
-    if(SLUG_SEASON[x]){ F.season = SLUG_SEASON[x]; any = true; }
+    if(x==="znyzhky"){ any = true; }
+    else if(SLUG_SEASON[x]){ F.season = SLUG_SEASON[x]; any = true; }
     else if(SLUG_TYPE[x]){ F.types.add(SLUG_TYPE[x]); any = true; }
     else if(/^\d{2}$/.test(x) && SIZE_LIST.includes(+x)){ F.sizes.add(+x); any = true; }
   }
@@ -729,6 +740,7 @@ function filtered(){
   const heelOk = h => [...F.heels].some(k=>{ const r=HEELS.find(x=>x[0]===k); return h!==null && h!==undefined && h>=r[2] && h<=r[3]; });
   let list = P.filter(p=>{
     if(F.fav) return FAV.has(p.id);
+    if(F.sale && !p.old) return false;
     if(F.stock && !p.avail) return false;
     if(F.types.size && !F.types.has(p.type)) return false;
     if(F.season!=="all" && p.season!==F.season) return false;
@@ -753,6 +765,7 @@ function catTitle(){
   if(t.length) parts.push(t.join(", "));
   if(F.season!=="all") parts.push(t.length ? SEASON[F.season].toLowerCase() : SEASON_TITLE[F.season]);
   if(F.fav) return "Обране";
+  if(F.sale) return "Знижки";
   return parts.length ? parts.join(" · ") : "Новинки";
 }
 function renderGrid(){
@@ -771,13 +784,13 @@ function renderGrid(){
   }
   $("#grid").innerHTML = list.slice(0,shown).map(p=>`
     <article class="card${p.avail?"":" soldout"}">
-      <div class="ph">${p.avail?(NEW_IDS.has(p.id)?'<span class="badge new">Новинка</span>':""):'<span class="badge">Немає в наявності</span>'}${img(p.pics[0], p.name)}</div>
+      <div class="ph">${p.avail?(p.old?`<span class="badge sale">−${pct(p)}%</span>`:NEW_IDS.has(p.id)?'<span class="badge new">Новинка</span>':""):'<span class="badge">Немає в наявності</span>'}${img(p.pics[0], p.name)}</div>
       <button class="heart" type="button" data-fav="${p.id}" aria-pressed="${FAV.has(p.id)}" aria-label="Додати в обране: ${esc(p.name)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></button>
       <button class="hit" data-open="${p.id}" aria-label="${esc(p.name)}, ${fmt(p.price)}"></button>
       <p class="name">${esc(p.name)}</p>
       <p class="meta">${esc(metaLine(p))}</p>
       <div class="minisizes" aria-hidden="true">${p.sizes.map(z=>`<span class="${z.ok?"":"off"}">${z.s}</span>`).join("")}</div>
-      <p class="price">${fmt(p.price)}</p>
+      <p class="price">${priceHTML(p)}</p>
       <p class="parts">або <b>${PARTS} × ${fmt(perPart(p.price))}</b> частинами</p>
     </article>`).join("");
   const rest = list.length - shown;
@@ -802,7 +815,7 @@ function openProduct(id){
       <div class="gallery"><div class="main" id="mainPic">${img(p.pics[0], p.name)}</div>${thumbs}</div>
       <div class="info">
         <h2 id="pdTitle">${esc(p.name)}</h2>
-        <p class="price">${fmt(p.price)}</p>
+        <p class="price">${priceHTML(p)}</p>
         <p class="parts">або <b>${PARTS} платежі по ${fmt(perPart(p.price))}</b> з Покупкою частинами monobank</p>
         <dl>
           ${p.color?`<dt>Колір</dt><dd>${esc(p.color)}</dd>`:""}
@@ -909,7 +922,7 @@ function renderCart(){
     <fieldset class="payfield"><legend>Оплата</legend>
       <label><input type="radio" name="pay" value="cod" ${customer.pay==="cod"?"checked":""}><span>Післяплата<small>Передоплата ${PREPAY} ₴ онлайн зараз, решта при отриманні. При відмові на пошті передоплата не повертається.</small></span></label>
       <label><input type="radio" name="pay" value="card" ${customer.pay==="card"?"checked":""}><span>Повна оплата онлайн<small>Картою, Apple Pay або Google Pay через monobank.</small></span></label>
-      <label><input type="radio" name="pay" value="parts" ${customer.pay==="parts"?"checked":""}><span>Покупка частинами monobank<small>${PARTS} платежі по ${fmt(perPart(cartTotal()))}. Після оформлення підтвердіть покупку в застосунку monobank.</small></span></label>
+      <label><input type="radio" name="pay" value="parts" ${customer.pay==="parts"?"checked":""}><span>Покупка частинами monobank<small>${PARTS} платежі по ${fmt(perPart(cartTotal()))}. Після оформлення підтвердіть покупку в застосунку monobank. Перед замовленням перевірте доступний ліміт: застосунок monobank → «Покупка частинами».</small></span></label>
       <details class="chast-more"><summary>Умови Покупки частинами</summary>${document.getElementById("chastLegal").innerHTML}</details>
     </fieldset>`;
   $("#cartFoot").innerHTML = `
