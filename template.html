@@ -625,6 +625,36 @@ document.querySelector("nav.main").addEventListener("click", e=>{
   $("#catalog").scrollIntoView();
 });
 
+/* ---------- джерело відвідування (звідки прийшла клієнтка) ---------- */
+function detectSource(){
+  const q = new URLSearchParams(location.search);
+  const u = (q.get("utm_source")||"").toLowerCase(), med = (q.get("utm_medium")||"").toLowerCase();
+  if(q.get("gclid") || q.get("gbraid") || q.get("wbraid") || (u==="google" && /cpc|ppc|paid/.test(med))) return "Google реклама";
+  if(/^(ig|insta|instagram)/.test(u)) return "Instagram";
+  if(/^(tt|tiktok)/.test(u)) return "TikTok";
+  if(/^(fb|facebook)/.test(u)) return "Facebook";
+  if(u) return u.slice(0,40);
+  if(q.get("srsltid")) return "Google Покупки (безкоштовно)";
+  let host = "";
+  try{ host = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./,"") : ""; }catch(_){}
+  if(!host || host===location.hostname || /monobank|mono\.st4g3|pay\./.test(host)) return "";
+  if(/instagram\.com$/.test(host)) return "Instagram";
+  if(/tiktok\.com$/.test(host)) return "TikTok";
+  if(/(^|\.)google\./.test(host)) return "Google пошук";
+  if(/facebook\.com$|fb\.com$/.test(host)) return "Facebook";
+  if(/prom\.ua$/.test(host)) return "Prom";
+  return host.slice(0,40);
+}
+(function(){
+  // Запамʼятовуємо останнє «справжнє» джерело на 30 днів; прямий захід його не стирає.
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem("vnv-src")||"null"); }catch(_){}
+  if(saved && Date.now() - saved.t > 30*864e5) saved = null;
+  const now = detectSource();
+  if(now){ saved = {s:now, t:Date.now()}; try{ localStorage.setItem("vnv-src", JSON.stringify(saved)); }catch(_){} }
+  window.VISIT_SRC = saved ? saved.s : "Пряме посилання / месенджер";
+})();
+
 /* ---------- обране (зберігається в браузері покупця) ---------- */
 let FAV = new Set();
 try{ FAV = new Set(JSON.parse(localStorage.getItem("vnv-fav")||"[]").filter(id=>byId[id])); }catch(_){ FAV = new Set(); }
@@ -1031,7 +1061,7 @@ async function checkout(btn){
   btn.disabled = true; btn.textContent = "Оформлюємо…";
   try{
     const r = await fetch("/api/order", {method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({items:cart.map(i=>({id:i.id,size:i.size,qty:i.qty})), name:customer.name, phone:customer.phone, city:customer.city, pay:PAYMAP[customer.pay]||"prepay"})});
+      body: JSON.stringify({items:cart.map(i=>({id:i.id,size:i.size,qty:i.qty})), name:customer.name, phone:customer.phone, city:customer.city, pay:PAYMAP[customer.pay]||"prepay", src:window.VISIT_SRC||""})});
     let d = {}; try{ d = await r.json(); }catch(_){}
     if(!r.ok || !d.ok) throw new Error(d.error || "");
     if(d.payUrl){
