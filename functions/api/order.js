@@ -40,6 +40,7 @@ async function handlePost({ request, env }) {
   const name = clean(body.name, 80);
   const phone = clean(body.phone, 30);
   const city = clean(body.city, 160);
+  const src = clean(body.src, 60) || "невідомо";
   const pay = PAY_LABEL[body.pay] ? body.pay : "prepay";
   if (!name || phone.replace(/\D/g, "").length < 10 || !city) {
     return json({ error: "Вкажіть імʼя, телефон і місто з відділенням Нової Пошти." }, 400);
@@ -131,10 +132,11 @@ async function handlePost({ request, env }) {
     `👤 ${name}`,
     `📞 ${phone}`,
     `📦 ${city}`,
+    `🧭 Джерело: ${src}`,
   ].join("\n");
   const saved = await saveOrder(env, {
     o: order, t: Date.now(), n: name, ph: phone, c: city, sum: total, pay, toPay,
-    st: payUrl ? "очікує оплати" : chast ? "заявка в monobank" : "нове", items: lines, chast,
+    st: payUrl ? "очікує оплати" : chast ? "заявка в monobank" : "нове", items: lines, chast, src,
   });
   const sent = await telegram(env, text);
   if (!sent && !payUrl && !saved) {
@@ -249,7 +251,7 @@ async function saveOrder(env, rec) {
   if (!env.ORDERS) return false;
   try {
     const key = `o:${String(9e12 - rec.t).padStart(13, "0")}:${rec.o}`;
-    const meta = { o: rec.o, t: rec.t, n: rec.n.slice(0, 60), ph: rec.ph, sum: rec.sum, pay: rec.pay, st: rec.st };
+    const meta = { o: rec.o, t: rec.t, n: rec.n.slice(0, 60), ph: rec.ph, sum: rec.sum, pay: rec.pay, st: rec.st, src: rec.src || "" };
     await env.ORDERS.put(key, JSON.stringify(rec), { metadata: meta });
     await env.ORDERS.put(`n:${rec.o}`, key);
     return true;
@@ -318,7 +320,7 @@ async function ordersPage(request, env, url) {
         const rec = JSON.parse((await env.ORDERS.get(k.name)) || "{}");
         more = `<pre>${esc((rec.items || []).join("\n"))}\n\n📦 ${esc(rec.c || "")}</pre>`;
       }
-      orders += `<div class="row"><b>${esc(m.o || "")}</b> · ${money(m.sum || 0)} · ${esc(PAY_LABEL[m.pay] || m.pay || "")}<br>${esc(m.st || "")}<br><small>${esc(kyivTime(m.t))} · 👤 ${esc(m.n || "")} · 📞 ${esc(m.ph || "")}</small>
+      orders += `<div class="row"><b>${esc(m.o || "")}</b> · ${money(m.sum || 0)} · ${esc(PAY_LABEL[m.pay] || m.pay || "")}<br>${esc(m.st || "")}<br><small>${esc(kyivTime(m.t))} · 👤 ${esc(m.n || "")} · 📞 ${esc(m.ph || "")}${m.src ? " · 🧭 " + esc(m.src) : ""}</small>
         <form method="post">${hidden}<input type="hidden" name="open" value="${esc(m.o || "")}"><button class="sm">Що замовили і куди</button></form>${more}</div>`;
     }
   }
