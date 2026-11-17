@@ -8,6 +8,7 @@ window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'AW-18555897426');
+gtag('config', 'G-TE1DN9T0CX');
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -871,6 +872,7 @@ function openProduct(id){
       </div>
     </div>`;
   pdDialog.showModal();
+  ga("view_item", {value:p.price, items:[gaItem(p)]});
   try{ history.replaceState(null,"","/m/" + encodeURIComponent(p.id)); }catch(_){}
 }
 pdDialog.addEventListener("close", ()=>{ if(location.pathname.startsWith("/m/")) syncUrl(); });
@@ -905,7 +907,14 @@ pdDialog.addEventListener("click", e=>{
 let cart = [];
 try{ cart = JSON.parse(localStorage.getItem("vnv-cart2")||"[]").filter(i=>byId[i.id] && byId[i.id].sizes.some(z=>z.s===i.size && z.ok)); }catch(e){ cart = []; }
 const save = () => { try{ localStorage.setItem("vnv-cart2", JSON.stringify(cart)); }catch(e){} };
+/* ---------- Google Analytics: перегляди товарів, кошик, покупки ---------- */
+function gaItem(p, size, qty){
+  return {item_id:String(p.id), item_name:p.name, item_category:p.type||"", item_variant:size?String(size):undefined, price:p.price, quantity:qty||1};
+}
+function ga(name, params){ try{ if(typeof gtag==="function") gtag("event", name, Object.assign({currency:"UAH"}, params)); }catch(_){} }
+
 function addToCart(id,size){
+  const p = byId[id]; if(p) ga("add_to_cart", {value:p.price, items:[gaItem(p,size,1)]});
   const f = cart.find(i=>i.id===id && i.size===size);
   if(f) f.qty++; else cart.push({id,size,qty:1});
   save(); updateCount();
@@ -1040,6 +1049,7 @@ const PAYMAP = {cod:"prepay", card:"full", parts:"parts"};
 function trackPurchase(no){
   const value = cartTotal();
   if(!value || typeof gtag !== "function") return;
+  ga("purchase", {transaction_id:String(no||""), value:value, items:cart.map(i=>gaItem(byId[i.id], i.size, i.qty))});
   gtag("event", "conversion", {send_to:"AW-18555897426/uZtcCMvrg7IdENKMkpBF", value:value, currency:"UAH", transaction_id:String(no||"")});
 }
 function thanks(no, note){
@@ -1059,6 +1069,7 @@ async function checkout(btn){
     return;
   }
   btn.disabled = true; btn.textContent = "Оформлюємо…";
+  ga("begin_checkout", {value:cartTotal(), items:cart.map(i=>gaItem(byId[i.id], i.size, i.qty))});
   try{
     const r = await fetch("/api/order", {method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({items:cart.map(i=>({id:i.id,size:i.size,qty:i.qty})), name:customer.name, phone:customer.phone, city:customer.city, pay:PAYMAP[customer.pay]||"prepay", src:window.VISIT_SRC||""})});
