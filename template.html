@@ -99,6 +99,17 @@ nav.main button:hover{border-bottom-color:var(--sand)}
 .cat span{position:absolute;left:0;right:0;bottom:0;padding:40px 16px 14px;background:linear-gradient(transparent,rgba(30,18,16,.72));font-family:var(--display);font-size:22px;line-height:1.2}
 .cat small{display:block;font-family:var(--body);font-size:13px;opacity:.9;margin-top:2px}
 .badge.new{background:var(--brand)}
+#quick{position:fixed;inset:0;z-index:50;background:rgba(30,18,16,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+#quick .q-box{background:var(--surface);border-radius:12px;max-width:820px;width:100%;max-height:92vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:20px}
+#quick img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;background:var(--ground)}
+#quick h2{font-family:var(--display);font-weight:400;font-size:26px;margin:0 0 8px}
+#quick .q-price{font-size:22px;font-weight:700;margin:0 0 16px}
+#quick .q-price s{font-size:15px;color:var(--muted);font-weight:400}
+#quick .q-lbl{font-size:14px;color:var(--muted);margin:0 0 6px}
+#quick .q-sizes{display:flex;flex-wrap:wrap;gap:6px}
+#quick .q-sizes span{border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-weight:600}
+#quick .q-wait{margin-top:20px;color:var(--muted);font-size:14px}
+@media (max-width:760px){ #quick .q-box{grid-template-columns:1fr;gap:12px} }
 .badge.sale{background:#B3261E}
 .price .old{font-family:var(--body);font-size:.62em;color:var(--muted);margin-right:4px}
 .price .now{color:#B3261E}
@@ -385,7 +396,7 @@ footer a{color:#fff}
         </div>
       </details>
       <div>
-        <div class="grid" id="grid"></div>
+        <div class="grid" id="grid"><p class="hint" style="grid-column:1/-1">Завантажуємо моделі…</p></div>
         <div class="more" id="more"></div>
       </div>
     </div>
@@ -494,7 +505,8 @@ const CONTACT = {
 };
 /* ========================================================= */
 
-const DATA = /*__DATA__*/null;
+const META = /*__DATA__*/null;
+function startApp(DATA){
 const PIC = f => /^https?:/.test(f) ? f : "https://backend.mydrop.com.ua/vendor/products/uploads/" + f;
 const P = DATA.products.map((r,i)=>({
   id:String(r.i), art:r.a, name:r.n, type:r.t, season:r.s, color:r.c, mat:r.m, heel:r.h,
@@ -875,11 +887,19 @@ function openProduct(id){
         <button class="linkbtn pd-fav" id="pdFav" type="button" aria-pressed="${FAV.has(p.id)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span>${FAV.has(p.id)?"В обраному":"В обране"}</span></button>
         <button class="linkbtn" id="copyModel" type="button">🔗 Посилання на цю модель</button>
         <p class="pd-terms">Післяплата з передоплатою 200 ₴, оплата онлайн за посиланням monobank або Покупка частинами monobank на 3 платежі. Обмін і повернення протягом 14 днів. <a href="#terms" data-close>Детальніше</a></p>
-        ${p.desc?`<p class="desc">${esc(p.desc)}</p>`:""}
+        <p class="desc" id="pdDesc" ${p.desc?"":"hidden"}>${esc(p.desc)}</p>
       </div>
     </div>`;
   pdDialog.showModal();
   ga("view_item", {value:p.price, items:[gaItem(p)]});
+  if(!p.desc && !p._dl){
+    p._dl = true;
+    fetch("/d/" + String(p.id).replace(/[^0-9A-Za-z_-]/g,"_") + ".json").then(r=>r.ok?r.json():null).then(r=>{
+      if(!r || !r.d) return; p.desc = r.d;
+      const el = document.getElementById("pdDesc");
+      if(el && current===p){ el.textContent = r.d; el.hidden = false; }
+    }).catch(()=>{});
+  }
   setTitle(p.name);
   try{ history.replaceState(null,"","/m/" + encodeURIComponent(p.id)); }catch(_){}
 }
@@ -1109,6 +1129,39 @@ const fromUrl = applyUrl();
 applyContacts(); renderReviews(); renderCats(); renderFavCount(); renderFilters(); renderGrid(); updateCount(); orderReturn();
 if(fromUrl.product && byId[fromUrl.product]) openProduct(fromUrl.product);
 else if(fromUrl.filters){ const t = catTitle(); if(t!=="Новинки") setTitle(t); $("#catalog").scrollIntoView(); }
+}
+
+/* ---------- швидкий старт: каталог вантажиться окремим файлом ---------- */
+(function boot(){
+  const PIC0 = f => /^https?:/.test(f) ? f : "https://backend.mydrop.com.ua/vendor/products/uploads/" + f;
+  const fmt0 = n => Number(n).toLocaleString("uk-UA").replace(/\u00a0/g," ") + " ₴";
+  const esc0 = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  let ready = false;
+  const m = location.pathname.match(/^\/m\/([^\/?#]+)/);
+  if(m){
+    // Людина прийшла з реклами на конкретну модель: показуємо її одразу, поки вантажиться решта.
+    fetch("/d/" + encodeURIComponent(decodeURIComponent(m[1])).replace(/[^0-9A-Za-z_-]/g,"_") + ".json")
+      .then(r=>r.ok ? r.json() : null).then(r=>{
+        if(!r || ready || !r.n) return;
+        const sizes = (r.z||[]).filter(z=>z[2]).map(z=>`<span>${esc0(z[0])}</span>`).join("");
+        const el = document.createElement("div"); el.id = "quick"; el.setAttribute("role","dialog"); el.setAttribute("aria-label", r.n);
+        el.innerHTML = `<div class="q-box">${(r.g&&r.g[0])?`<img src="${esc0(PIC0(r.g[0]))}" alt="${esc0(r.n)}">`:""}
+          <div class="q-info"><h2>${esc0(r.n)}</h2><p class="q-price">${r.o?`<s>${fmt0(r.o)}</s> `:""}${fmt0(r.p)}</p>
+          ${sizes?`<p class="q-lbl">Розміри в наявності</p><div class="q-sizes">${sizes}</div>`:""}
+          <p class="q-wait">Завантажуємо магазин…</p></div></div>`;
+        document.body.appendChild(el);
+        document.title = r.n + " — Взуття на Висоті";
+      }).catch(()=>{});
+  }
+  fetch(META.src).then(r=>r.json()).then(d=>{
+    ready = true;
+    startApp(d);
+    const q = document.getElementById("quick"); if(q) q.remove();
+  }).catch(()=>{
+    const g = document.getElementById("grid");
+    if(g) g.innerHTML = '<div class="empty"><p>Не вдалося завантажити каталог. Оновіть сторінку.</p><button class="btn ghost" onclick="location.reload()">Оновити</button></div>';
+  });
+})();
 </script>
 </body>
 </html>

@@ -7,7 +7,7 @@
 
 Якщо --feed не вказано, береться змінна оточення FEED_URL.
 """
-import argparse, html, json, os, re, sys, urllib.parse, urllib.request
+import argparse, hashlib, html, json, os, re, sys, urllib.parse, urllib.request
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
@@ -356,8 +356,27 @@ def main():
                 merged[p["i"]] = ((n + 0.5) / len(part), i, p)
     products = [p for _, _, p in sorted(merged.values(), key=lambda t: (t[0], t[1]))]
     kyiv = datetime.now(timezone.utc) + timedelta(hours=3)
-    data = {"updated": kyiv.strftime("%d.%m.%Y, %H:%M"), "products": products}
-    js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    updated = kyiv.strftime("%d.%m.%Y, %H:%M")
+    outdir = os.path.dirname(os.path.abspath(a.out))
+    # Каталог — окремим файлом data.json (без описів, щоб був легшим);
+    # повний запис кожної моделі з описом — у d/<id>.json (відкривається миттєво з реклами).
+    lite = {"updated": updated, "products": [{k: v for k, v in p.items() if k != "d"} for p in products]}
+    body = json.dumps(lite, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join(outdir, "data.json"), "w", encoding="utf-8") as f:
+        f.write(body)
+    ver = hashlib.sha1(body.encode("utf-8")).hexdigest()[:10]
+    ddir = os.path.join(outdir, "d")
+    os.makedirs(ddir, exist_ok=True)
+    dkeep = set()
+    for p in products:
+        fn = re.sub(r"[^0-9A-Za-z_-]", "_", str(p["i"])) + ".json"
+        dkeep.add(fn)
+        with open(os.path.join(ddir, fn), "w", encoding="utf-8") as f:
+            json.dump(p, f, ensure_ascii=False, separators=(",", ":"))
+    for fn in os.listdir(ddir):
+        if fn not in dkeep:
+            os.remove(os.path.join(ddir, fn))
+    js = json.dumps({"updated": updated, "src": f"/data.json?v={ver}"}, ensure_ascii=False)
     with open(a.template, encoding="utf-8") as f:
         tpl = f.read()
     assert "/*__DATA__*/null" in tpl, "У шаблоні немає мітки /*__DATA__*/null"
