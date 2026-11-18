@@ -737,7 +737,14 @@ function filterPath(){
   const qs = q.toString();
   return "/" + seg.join("/") + (qs ? "?" + qs : "");
 }
-function syncUrl(){ try{ history.replaceState(null,"",filterPath()); }catch(_){} }
+const BASE_TITLE = document.title;
+function setTitle(t){ document.title = t ? t + " — Взуття на Висоті" : BASE_TITLE; }
+// Заголовок міняємо ДО зміни адреси: Google Analytics сам рахує перегляд при зміні адреси
+// і бере заголовок у цей момент.
+function syncUrl(){
+  const t = catTitle(); setTitle(t==="Новинки" ? "" : t);
+  try{ history.replaceState(null,"",filterPath()); }catch(_){}
+}
 function applyUrl(){
   const seg = decodeURIComponent(location.pathname).split("/").filter(Boolean).map(x=>x.toLowerCase());
   if(seg[0]==="m" && seg[1]) return {product:seg[1]};
@@ -873,6 +880,7 @@ function openProduct(id){
     </div>`;
   pdDialog.showModal();
   ga("view_item", {value:p.price, items:[gaItem(p)]});
+  setTitle(p.name);
   try{ history.replaceState(null,"","/m/" + encodeURIComponent(p.id)); }catch(_){}
 }
 pdDialog.addEventListener("close", ()=>{ if(location.pathname.startsWith("/m/")) syncUrl(); });
@@ -1100,7 +1108,7 @@ if(window.matchMedia("(min-width:1025px)").matches) $("#filtersBox").open = true
 const fromUrl = applyUrl();
 applyContacts(); renderReviews(); renderCats(); renderFavCount(); renderFilters(); renderGrid(); updateCount(); orderReturn();
 if(fromUrl.product && byId[fromUrl.product]) openProduct(fromUrl.product);
-else if(fromUrl.filters) $("#catalog").scrollIntoView();
+else if(fromUrl.filters){ const t = catTitle(); if(t!=="Новинки") setTitle(t); $("#catalog").scrollIntoView(); }
 </script>
 </body>
 </html>
