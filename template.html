@@ -38,6 +38,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
 
 /* top bar + header */
+.ticker{background:var(--brand);color:#fff;overflow:hidden;font-size:14px;font-weight:600;white-space:nowrap}
+.ticker-track{display:flex;width:max-content;animation:ticker 40s linear infinite}
+.ticker:hover .ticker-track,.ticker:focus-within .ticker-track{animation-play-state:paused}
+.ticker-set{display:flex;flex-shrink:0}
+.ticker-set > *{padding:9px 28px;position:relative;color:#fff;text-decoration:none}
+.ticker-set > *::after{content:"✦";position:absolute;right:-6px;opacity:.6}
+.ticker a{text-decoration:underline;text-underline-offset:3px}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){ .ticker-track{animation:none} .ticker{overflow-x:auto} }
 .topbar{background:var(--ink);color:#EFE6E1;font-size:14px}
 .topbar .wrap{display:flex;justify-content:space-between;gap:16px;padding-top:8px;padding-bottom:8px;flex-wrap:wrap}
 .topbar a{color:#fff;text-decoration:none;font-weight:600}
@@ -325,8 +334,8 @@ footer a{color:#fff}
 </head>
 <body>
 
+<div class="ticker" aria-label="Акції та переваги"><div class="ticker-track" id="ticker"><div class="ticker-set"><a href="/znyzhky" data-ticker-sale>🔥 Розпродаж: знижки на взуття — дивитись</a><span>Покупка частинами monobank на 3 платежі</span><span>Доставка Новою Поштою 1–3 дні · відправка Пн–Сб</span><span>Огляд і приміряння на пошті</span><span>Обмін і повернення 14 днів</span></div><div class="ticker-set" aria-hidden="true"><a href="/znyzhky" data-ticker-sale>🔥 Розпродаж: знижки на взуття — дивитись</a><span>Покупка частинами monobank на 3 платежі</span><span>Доставка Новою Поштою 1–3 дні · відправка Пн–Сб</span><span>Огляд і приміряння на пошті</span><span>Обмін і повернення 14 днів</span></div></div></div>
 <div class="topbar"><div class="wrap">
-  <span class="usp">Доставка Новою Поштою по Україні · Покупка частинами monobank · Обмін і повернення</span>
   <nav aria-label="Інформація для покупців"><a href="#reviews">Відгуки</a><a href="#terms">Оплата і доставка</a><a href="#returns">Обмін і повернення</a><a href="https://www.instagram.com/vzuttya_na_vusoti/" target="_blank" rel="noopener">Instagram</a><a id="topPhone" href="#">[ваш номер телефону]</a></nav>
 </div></div>
 
@@ -703,6 +712,21 @@ $("#openFav").addEventListener("click", ()=>{
   F.sale = false; F.fav = true; changed(); renderFavCount();
   $("#catalog").scrollIntoView();
 });
+
+/* ---------- біжучий рядок: найбільша знижка зараз ---------- */
+(function(){
+  const sale = P.filter(p=>p.avail && p.old);
+  const links = document.querySelectorAll("[data-ticker-sale]");
+  if(!sale.length){ links.forEach(a=>a.remove()); return; }
+  const max = Math.max(...sale.map(pct));
+  links.forEach(a=>{ a.textContent = `🔥 Розпродаж: знижки до −${max}% на ${sale.length} ${plural(sale.length)} — дивитись`; });
+  document.getElementById("ticker").addEventListener("click", e=>{
+    if(!e.target.closest("[data-ticker-sale]")) return;
+    e.preventDefault();
+    [F.types,F.colors,F.sizes,F.heels,F.mats].forEach(s=>s.clear()); F.season="all"; F.q=""; $("#q").value=""; F.fav=false;
+    F.sale = true; changed(); $("#catalog").scrollIntoView();
+  });
+})();
 
 /* ---------- плитки категорій ---------- */
 const CAT_TILES = [
