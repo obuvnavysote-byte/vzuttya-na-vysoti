@@ -49,6 +49,95 @@ COLORS = [
 ]
 
 
+def is_sheet(src):
+    return bool(re.search(r"output=csv|\.csv(\?|$)|docs\.google\.com/spreadsheets", src or ""))
+
+
+def read_bytes(src):
+    if re.match(r"https?://", src):
+        req = urllib.request.Request(src, headers={"User-Agent": "catalog-builder"})
+        with urllib.request.urlopen(req, timeout=180) as r:
+            return r.read()
+    with open(src, "rb") as f:
+        return f.read()
+
+
+def drive_pic(u):
+    """Посилання Google Диска → пряме посилання на зображення."""
+    u = u.strip()
+    m = re.search(r"drive\.google\.com/(?:file/d/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})", u) \
+        or re.search(r"drive\.google\.com/.*[?&]id=([\w-]{20,})", u)
+    return f"https://lh3.googleusercontent.com/d/{m.group(1)}=w1200" if m else u
+
+
+SHEET_TYPES = {label.lower(): label for label, _ in TYPES}
+SHEET_SEASON = {"зима": "w", "зимові": "w", "демісезон": "d", "деміс": "d", "осінь": "d", "весна": "d", "літо": "s", "літні": "s"}
+
+
+def build_sheet(data, prefix="my"):
+    """Ваші власні товари з Google Таблиці (опублікованої як CSV)."""
+    import csv, io
+    text = data.decode("utf-8-sig", errors="replace")
+    rows = list(csv.reader(io.StringIO(text)))
+    if not rows:
+        return []
+    head = [h.strip().lower() for h in rows[0]]
+    def col(*names):
+        for n in names:
+            for i, h in enumerate(head):
+                if h.startswith(n):
+                    return i
+        return None
+    C = {"a": col("артикул", "код"), "n": col("назва", "название"), "p": col("ціна", "цена"),
+         "o": col("стара", "старая"), "z": col("розмір", "размер"), "t": col("тип"), "s": col("сезон"),
+         "c": col("колір", "цвет"), "m": col("матеріал", "материал"), "h": col("каблук"),
+         "g": col("фото"), "d": col("опис", "описание")}
+    get = lambda r, k: (r[C[k]].strip() if C[k] is not None and C[k] < len(r) else "")
+    num = lambda v: float(re.sub(r"[^\d.]", "", v.replace(",", ".")) or 0) if v else 0
+    products, seen = [], set()
+    for r in rows[1:]:
+        art, raw = get(r, "a"), get(r, "n")
+        price, old = num(get(r, "p")), num(get(r, "o"))
+        if not art or not raw or price <= 0:
+            continue
+        slug = re.sub(r"[^0-9A-Za-z_-]", "", art) or hashlib.sha1(art.encode()).hexdigest()[:8]
+        gid = prefix + slug
+        if gid in seen:
+            continue
+        seen.add(gid)
+        sizes = {}
+        for tok in re.split(r"[,;\n]+", get(r, "z")):
+            m = re.match(r"\s*(\d{2})(?:[.,]5)?\s*(?:[-–:/]\s*(\d{2}(?:[.,]\d)?)\s*(?:см|cm)?)?\s*(?:\((\d+)\))?", tok)
+            if not m or not 30 <= int(m.group(1)) <= 46:
+                continue
+            cm = m.group(2).replace(",", ".") if m.group(2) else None
+            cm = (cm if "." in cm else cm + ".0") if cm else None
+            q = int(m.group(3)) if m.group(3) else 5
+            sizes[int(m.group(1))] = [int(m.group(1)), cm, q]
+        pics = [drive_pic(u) for u in re.split(r"[,\s]+", get(r, "g")) if u.startswith("http")][:8]
+        if not sizes or not pics:
+            continue
+        name, code = clean_name(raw)
+        desc = clean_desc(get(r, "d"))
+        text = raw + "\n" + get(r, "m") + "\n" + desc
+        t_raw = get(r, "t").lower()
+        typ = SHEET_TYPES.get(t_raw) or classify(raw + " " + t_raw, "")
+        season = next((v for k, v in SHEET_SEASON.items() if get(r, "s").lower().startswith(k)), "") or season_of(raw, "", desc, typ)
+        heel = num(get(r, "h"))
+        old = old if old * 0.95 >= price else 0
+        products.append({
+            "i": gid, "a": art, "n": name or raw, "t": typ, "s": season,
+            "c": find_first(COLORS, get(r, "c")) or find_first(COLORS, raw) or get(r, "c").lower(),
+            "m": material_of(get(r, "m")) or material_of(text) or get(r, "m").lower(),
+            "h": heel if heel else heel_of(text, raw),
+            "p": int(price) if float(price).is_integer() else price,
+            **({"o": int(old) if float(old).is_integer() else old} if old else {}),
+            "g": pics, "z": [sizes[k] for k in sorted(sizes)], "d": desc,
+        })
+    products.reverse()  # нові рядки внизу таблиці → вгорі каталогу
+    return products
+
+
 def load_feed(src):
     if re.match(r"https?://", src):
         req = urllib.request.Request(src, headers={"User-Agent": "catalog-builder"})
@@ -336,13 +425,13 @@ def main():
         sys.exit("Вкажіть --feed або змінну FEED_URL")
     # Основна вигрузка обовʼязкова; додаткові (FEED_URL2, FEED_URL3) — якщо задані.
     # Якщо додаткова тимчасово недоступна, сайт оновлюється з рештою.
-    extra = [os.environ.get(k) for k in ("FEED_URL2", "FEED_URL3")]
+    extra = [os.environ.get(k) for k in ("FEED_URL2", "FEED_URL3", "FEED_URL4")]
     merged = {}
     for i, src in enumerate([a.feed] + [u for u in extra if u and u.strip()]):
         try:
             host = re.sub(r"^www\.", "", urllib.parse.urlparse(src.strip()).netloc)
             prefix = "" if (i == 0 or "mydrop" in host or not host) else re.sub(r"[^a-z]", "", host)[:2]
-            part = build(load_feed(src.strip()), prefix)
+            part = build_sheet(read_bytes(src.strip())) if is_sheet(src) else build(load_feed(src.strip()), prefix)
         except Exception as e:
             if i == 0:
                 raise
@@ -351,9 +440,10 @@ def main():
         print(f"Вигрузка {i + 1}: {len(part)} моделей")
         # Кожна вигрузка вже відсортована від нових; перемішуємо їх рівномірно,
         # щоб новинки всіх постачальників були вгорі каталогу.
+        own = is_sheet(src)  # ваші власні товари — завжди першими в каталозі
         for n, p in enumerate(part):
             if p["i"] not in merged:
-                merged[p["i"]] = ((n + 0.5) / len(part), i, p)
+                merged[p["i"]] = ((-1 + n / 1e6) if own else (n + 0.5) / len(part), i, p)
     products = [p for _, _, p in sorted(merged.values(), key=lambda t: (t[0], t[1]))]
     kyiv = datetime.now(timezone.utc) + timedelta(hours=3)
     updated = kyiv.strftime("%d.%m.%Y, %H:%M")
