@@ -15,7 +15,9 @@ const CHAST_API = "https://u2.monobank.com.ua";
 const PAY_LABEL = {
   full: "повна оплата онлайн",
   prepay: `післяплата, передоплата ${PREPAY} ₴`,
-  parts: "оплата частинами monobank",
+  parts: "Покупка частинами monobank",
+  abandon: "🛒 незавершене замовлення",
+  ask: "❓ питання про модель",
 };
 
 export async function onRequestPost(ctx) {
@@ -33,6 +35,8 @@ async function handlePost({ request, env }) {
   if (url.searchParams.get("hook") === "chast") return chastHook(request, env, url);
   if (url.searchParams.get("orders")) return ordersPage(request, env, url);
   if (url.searchParams.get("admin")) return chastAdminAction(request, env, url);
+  if (url.searchParams.get("abandon")) return abandonedCart(request, env, url);
+  if (url.searchParams.get("ask")) return askQuestion(request, env, url);
 
   let body;
   try { body = await request.json(); } catch { return json({ error: "Некоректні дані замовлення." }, 400); }
@@ -243,6 +247,51 @@ async function chastAdminAction(request, env, url) {
   return page(r.ok
     ? `<h1>${done}</h1><p>Замовлення ${order}.</p>`
     : `<h1>Не вийшло</h1><p>monobank відповів: ${esc(r.data.message || String(r.status))}</p><p>Можливо, клієнт ще не підтвердив заявку в застосунку.</p>`);
+}
+
+// ---------- Незавершене замовлення і питання про модель ----------
+async function readJson(request) {
+  try { return JSON.parse(await request.text()); } catch { return null; }
+}
+async function abandonedCart(request, env, url) {
+  const b = await readJson(request);
+  if (!b) return json({ error: "bad" }, 400);
+  const phone = clean(b.phone, 30);
+  if (phone.replace(/\D/g, "").length < 10) return json({ error: "phone" }, 400);
+  const name = clean(b.name, 80), city = clean(b.city, 160), src = clean(b.src, 60) || "невідомо";
+  const items = Array.isArray(b.items) ? b.items.slice(0, 10) : [];
+  const catalog = await loadCatalog(env, url);
+  const lines = []; let total = 0;
+  for (const it of items) {
+    const p = await catalog(String(it.id)); if (!p) continue;
+    const qty = Math.min(Math.max(parseInt(it.qty, 10) || 1, 1), 5);
+    total += p.p * qty;
+    lines.push(`• ${p.n}, р. ${clean(String(it.size), 4)}, ${qty} шт., ${money(p.p * qty)} (арт. ${p.a})`);
+  }
+  if (!lines.length) return json({ ok: true });
+  const id = "CART-" + orderNo().slice(3);
+  await saveOrder(env, { o: id, t: Date.now(), n: name || "—", ph: phone, c: city, sum: total, pay: "abandon", toPay: 0,
+    st: "🛒 не завершено — напишіть клієнтці", items: lines, chast: false, src });
+  await telegram(env, [`🛒 Незавершене замовлення`, "Клієнтка заповнила телефон, але не оформила замовлення:", "", ...lines, "",
+    `Разом: ${money(total)}`, name ? `👤 ${name}` : "", `📞 ${phone}`, city ? `📦 ${city}` : "", `🧭 Джерело: ${src}`,
+    "", "Напишіть їй у Viber чи Telegram і запропонуйте допомогу."].filter((x) => x !== "").join("\n"));
+  return json({ ok: true });
+}
+async function askQuestion(request, env, url) {
+  const b = await readJson(request);
+  if (!b || b.website) return json({ ok: true });
+  const phone = clean(b.phone, 30);
+  if (phone.replace(/\D/g, "").length < 10) return json({ error: "Вкажіть номер телефону." }, 400);
+  const name = clean(b.name, 80), q = clean(b.question, 400), src = clean(b.src, 60) || "невідомо";
+  const p = b.id ? await (await loadCatalog(env, url))(String(b.id)) : null;
+  const model = p ? `${p.n}, ${money(p.p)} (арт. ${p.a})` : "";
+  const link = p ? `${url.origin}/m/${encodeURIComponent(String(b.id))}` : "";
+  const id = "Q-" + orderNo().slice(3);
+  await saveOrder(env, { o: id, t: Date.now(), n: name || "—", ph: phone, c: "", sum: p ? p.p : 0, pay: "ask", toPay: 0,
+    st: "❓ напишіть клієнтці", items: [model && `Модель: ${model}`, q && `Питання: ${q}`].filter(Boolean), chast: false, src });
+  const sent = await telegram(env, [`❓ Питання про модель — напишіть клієнтці`, model && `👟 ${model}`, link, q && `💬 ${q}`,
+    name && `👤 ${name}`, `📞 ${phone}`, `🧭 Джерело: ${src}`].filter(Boolean).join("\n"));
+  return sent ? json({ ok: true }) : json({ error: "Не вдалося надіслати. Напишіть нам у Viber чи Telegram." }, 502);
 }
 
 // ---------- Збереження замовлень і сторінка «Мої замовлення» ----------
