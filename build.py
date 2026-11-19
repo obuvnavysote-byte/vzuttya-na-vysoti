@@ -74,13 +74,23 @@ SHEET_TYPES = {label.lower(): label for label, _ in TYPES}
 SHEET_SEASON = {"зима": "w", "зимові": "w", "демісезон": "d", "деміс": "d", "осінь": "d", "весна": "d", "літо": "s", "літні": "s"}
 
 
+SHEET_REPORT = {}
+
+
 def build_sheet(data, prefix="my"):
     """Ваші власні товари з Google Таблиці (опублікованої як CSV)."""
     import csv, io
     text = data.decode("utf-8-sig", errors="replace")
+    rep = SHEET_REPORT
+    rep.update({"bytes": len(data), "start": text[:60].replace("\n", " "), "rows": 0, "skipped": []})
+    if text.lstrip().lower().startswith(("<!doctype", "<html")):
+        rep["error"] = "замість таблиці Google повернув сторінку (таблицю не опубліковано як CSV?)"
+        return []
     rows = list(csv.reader(io.StringIO(text)))
     if not rows:
         return []
+    rep["rows"] = len(rows) - 1
+    rep["head"] = rows[0]
     head = [h.strip().lower() for h in rows[0]]
     def col(*names):
         for n in names:
@@ -99,6 +109,8 @@ def build_sheet(data, prefix="my"):
         art, raw = get(r, "a"), get(r, "n")
         price, old = num(get(r, "p")), num(get(r, "o"))
         if not art or not raw or price <= 0:
+            if any(x.strip() for x in r):
+                rep["skipped"].append(f"{art or '?'}: немає артикулу, назви або ціни")
             continue
         slug = re.sub(r"[^0-9A-Za-z_-]", "", art) or hashlib.sha1(art.encode()).hexdigest()[:8]
         gid = prefix + slug
@@ -116,6 +128,7 @@ def build_sheet(data, prefix="my"):
             sizes[int(m.group(1))] = [int(m.group(1)), cm, q]
         pics = [drive_pic(u) for u in re.split(r"[,\s]+", get(r, "g")) if u.startswith("http")][:8]
         if not sizes or not pics:
+            rep["skipped"].append(f"{art}: " + ("немає розмірів" if not sizes else "немає фото"))
             continue
         name, code = clean_name(raw)
         desc = clean_desc(get(r, "d"))
@@ -427,6 +440,7 @@ def main():
     # Якщо додаткова тимчасово недоступна, сайт оновлюється з рештою.
     extra = [os.environ.get(k) for k in ("FEED_URL2", "FEED_URL3", "FEED_URL4")]
     merged = {}
+    status = []
     for i, src in enumerate([a.feed] + [u for u in extra if u and u.strip()]):
         try:
             host = re.sub(r"^www\.", "", urllib.parse.urlparse(src.strip()).netloc)
@@ -436,8 +450,10 @@ def main():
             if i == 0:
                 raise
             print(f"Додаткова вигрузка {i + 1} недоступна: {e}", file=sys.stderr)
+            status.append({"feed": i + 1, "error": str(e)[:200]})
             continue
         print(f"Вигрузка {i + 1}: {len(part)} моделей")
+        status.append({"feed": i + 1, "models": len(part), **({"sheet": dict(SHEET_REPORT)} if is_sheet(src) else {})})
         # Кожна вигрузка вже відсортована від нових; перемішуємо їх рівномірно,
         # щоб новинки всіх постачальників були вгорі каталогу.
         own = is_sheet(src)  # ваші власні товари — завжди першими в каталозі
@@ -447,6 +463,8 @@ def main():
     products = [p for _, _, p in sorted(merged.values(), key=lambda t: (t[0], t[1]))]
     kyiv = datetime.now(timezone.utc) + timedelta(hours=3)
     updated = kyiv.strftime("%d.%m.%Y, %H:%M")
+    with open(os.path.join(os.path.dirname(os.path.abspath(a.out)), "status.json"), "w", encoding="utf-8") as f:
+        json.dump({"updated": updated, "feeds": status}, f, ensure_ascii=False, indent=1)
     outdir = os.path.dirname(os.path.abspath(a.out))
     # Каталог — окремим файлом data.json (без описів, щоб був легшим);
     # повний запис кожної моделі з описом — у d/<id>.json (відкривається миттєво з реклами).
