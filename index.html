@@ -534,7 +534,7 @@ const CONTACT = {
 };
 /* ========================================================= */
 
-const META = {"updated": "19.11.2026, 16:33", "src": "/data.json?v=7c424fcf49"};
+const META = {"updated": "19.11.2026, 16:52", "src": "/data.json?v=9523089dcf"};
 function startApp(DATA){
 const PIC = f => /^https?:/.test(f) ? f : "https://backend.mydrop.com.ua/vendor/products/uploads/" + f;
 const P = DATA.products.map((r,i)=>({
@@ -589,10 +589,10 @@ const REVIEWS = [
 const STAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
 // найновіші відгуки — першими
 REVIEWS.sort((a,b)=>{ const k=d=>d.split(".").reverse().join(""); return k(b.date).localeCompare(k(a.date)); });
-const IG_REVIEWS = 8;  // скриншоти в папці reviews/ (ig-1.jpg … ig-8.jpg)
+const IG_REVIEWS = 8;  // скриншоти ig-1.jpg … ig-8.jpg у корені сайту
 const RV_FIRST = 9;
 function renderReviews(){
-  $("#igStrip").innerHTML = Array.from({length:IG_REVIEWS},(_,i)=>`<a href="/reviews/ig-${i+1}.jpg" target="_blank" rel="noopener"><img src="/reviews/ig-${i+1}.jpg" alt="Відгук покупниці в Instagram" loading="lazy" width="540" height="820" onerror="this.parentNode.remove()"></a>`).join("");
+  $("#igStrip").innerHTML = Array.from({length:IG_REVIEWS},(_,i)=>`<a href="/ig-${i+1}.jpg" target="_blank" rel="noopener"><img src="/ig-${i+1}.jpg" alt="Відгук покупниці в Instagram" loading="lazy" width="540" height="820" onerror="this.parentNode.remove()"></a>`).join("");
   const more = $("#rvMore");
   more.hidden = REVIEWS.length <= RV_FIRST;
   more.onclick = ()=>{ document.querySelectorAll("#rvGrid .rv[hidden]").forEach(x=>x.hidden=false); more.hidden = true; };
