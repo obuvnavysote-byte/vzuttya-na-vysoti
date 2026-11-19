@@ -312,6 +312,12 @@ footer a{color:#fff}
 .rating{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:15px;flex-wrap:wrap}
 .rating strong{color:var(--ink);font-size:17px}
 .stars{display:inline-flex;gap:2px;color:var(--brand)}
+.rv-more{display:flex;justify-content:center;margin-top:24px}
+.ig-title{font-family:var(--display);font-weight:400;font-size:26px;margin:48px 0 16px}
+.ig-strip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px}
+.ig-strip a{scroll-snap-align:start;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.ig-strip img{display:block;width:100%;height:auto}
+.rv[hidden]{display:none}
 .rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;align-items:start}
 .rv{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:12px}
 .rv h3{font-size:17px;font-weight:700;margin:0}
@@ -431,6 +437,10 @@ footer a{color:#fff}
       <a class="btn ghost" href="https://www.instagram.com/vzuttya_na_vusoti/" target="_blank" rel="noopener">Ми в Instagram</a></div>
     </div>
     <div class="rv-grid" id="rvGrid"></div>
+    <div class="rv-more"><button class="btn ghost" type="button" id="rvMore" hidden>Показати ще відгуки</button></div>
+    <h3 class="ig-title">Що нам пишуть в Instagram</h3>
+    <div class="ig-strip" id="igStrip"></div>
+    <div class="rv-more"><a class="btn ghost" href="https://www.instagram.com/vzuttya_na_vusoti/" target="_blank" rel="noopener">Більше в нашому Instagram</a></div>
   </div></section>
 
   <section class="terms" id="terms"><div class="wrap">
@@ -524,7 +534,7 @@ const CONTACT = {
 };
 /* ========================================================= */
 
-const META = {"updated": "19.11.2026, 16:16", "src": "/data.json?v=22c494e051"};
+const META = {"updated": "19.11.2026, 16:33", "src": "/data.json?v=7c424fcf49"};
 function startApp(DATA){
 const PIC = f => /^https?:/.test(f) ? f : "https://backend.mydrop.com.ua/vendor/products/uploads/" + f;
 const P = DATA.products.map((r,i)=>({
@@ -556,6 +566,7 @@ function img(src, alt){
 
 /* ---------- відгуки (справжні, з Prom) ---------- */
 const REVIEWS = [
+  {name:"Людмила А.", date:"14.11.2026", item:"чоботи «Труби», натуральна шкіра, євро-зима, беж", title:"Гарні та якісні чоботи", text:"Чудові чоботи, якість, колір, модель все супер, краще підійдуть на худу ніжку, особливо в 36 розмірі. Чудовий магазин, швидка відправка товару, рекомендую)", tags:["Актуальний опис","Швидко відправили","Ввічливий продавець","Актуальна ціна","Товар був у наявності","Гарне обслуговування"]},
   {name:"Ольга С.", date:"08.11.2026", item:"чоботи на підборах з гострим носком, широка халява", title:"Чудово"},
   {name:"Бекетова", date:"05.11.2026", item:"чоботи бежеві", text:"Все супер, чоботи чудові. Буду заказувати ще! Колір беж дуже гарний, це любов!", tags:["Актуальний опис","Швидко відправили","Актуальна ціна","Товар був у наявності","Гарне обслуговування"]},
   {name:"Світлана Ю.", date:"05.11.2026", item:"шкіряні челсі на байці", title:"Чудово"},
@@ -567,15 +578,30 @@ const REVIEWS = [
   {name:"Віта С.", date:"12.08.2026", item:"босоніжки жовті шкіряні, каблук 6 см", title:"Відповідає опису", text:"Босоніжки відповідають опису, дуже зручні."},
   {name:"Ірина", date:"20.09.2026", tags:["Актуальний опис","Швидко відправили","Ввічливий продавець","Актуальна ціна","Товар був у наявності","Гарне обслуговування"]},
   {name:"Наталія Н.", date:"19.09.2026", item:"жокейські чоботи чорні шкіряні", title:"Чудово"},
-  {name:"Анна В.", date:"20.09.2026", item:"лофери жовті замшеві", title:"Чудово"}
+  {name:"Анна В.", date:"20.09.2026", item:"лофери жовті замшеві", title:"Чудово"},
+  {name:"Крістіна", date:"18.03.2026", item:"туфлі", text:"Прийшли швидко, гарно запаковані, туфлі просто супер"},
+  {name:"Катерина", date:"15.03.2026", item:"ботильйони", text:"Дуже гарні ботильйони. Дякую продавцю", tags:["Швидко відправили","Актуальна ціна","Товар був у наявності"]},
+  {name:"Ілона", date:"06.03.2026", tags:["Ввічливий продавець","Товар був у наявності"]},
+  {name:"Катерина Г.", date:"02.02.2026", text:"Дуже гарна якість взуття, зручні. Швидка доставка))", tags:["Актуальний опис","Швидко відправили","Ввічливий продавець"]},
+  {name:"Ання Р.", date:"07.01.2026", text:"Продавець швидко звʼязався, також допоміг обрати розмір. Швидко здійснена відправка. Якість товару дуже хороша. Рекомендую", tags:["Актуальний опис","Швидко відправили","Ввічливий продавець"]},
+  {name:"Зухра І.", date:"01.12.2025", tags:["Актуальний опис","Швидко відправили","Актуальна ціна"]},
 ];
 const STAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+// найновіші відгуки — першими
+REVIEWS.sort((a,b)=>{ const k=d=>d.split(".").reverse().join(""); return k(b.date).localeCompare(k(a.date)); });
+const IG_REVIEWS = 8;  // скриншоти в папці reviews/ (ig-1.jpg … ig-8.jpg)
+const RV_FIRST = 9;
 function renderReviews(){
+  $("#igStrip").innerHTML = Array.from({length:IG_REVIEWS},(_,i)=>`<a href="/reviews/ig-${i+1}.jpg" target="_blank" rel="noopener"><img src="/reviews/ig-${i+1}.jpg" alt="Відгук покупниці в Instagram" loading="lazy" width="540" height="820" onerror="this.parentNode.remove()"></a>`).join("");
+  const more = $("#rvMore");
+  more.hidden = REVIEWS.length <= RV_FIRST;
+  more.onclick = ()=>{ document.querySelectorAll("#rvGrid .rv[hidden]").forEach(x=>x.hidden=false); more.hidden = true; };
   $("#bigStars").innerHTML = STAR.repeat(5);
   $("#bigStars").setAttribute("aria-label","Оцінка 5 з 5");
   $("#rvGrid").innerHTML = REVIEWS.map(r=>{
     const short = !r.text;
-    return `<article class="rv${short?" short":""}">
+    const idx = REVIEWS.indexOf(r);
+    return `<article class="rv${short?" short":""}" ${idx>=RV_FIRST?"hidden":""}>
       <span class="stars" role="img" aria-label="5 з 5">${STAR.repeat(5)}</span>
       ${r.title?`<h3>${esc(r.title)}</h3>`:""}
       ${r.text?`<p class="txt">${esc(r.text)}</p>`:""}
