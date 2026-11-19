@@ -1,0 +1,21 @@
+{
+ "updated": "19.11.2026, 13:44",
+ "feeds": [
+  {
+   "feed": 1,
+   "models": 1978
+  },
+  {
+   "feed": 2,
+   "models": 5051
+  },
+  {
+   "feed": 3,
+   "models": 560
+  },
+  {
+   "feed": 4,
+   "error": "'ascii' codec can't encode character '\\u2026' in position 35: ordinal not in range(128)"
+  }
+ ]
+}
