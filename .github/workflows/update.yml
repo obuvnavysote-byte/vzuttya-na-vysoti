@@ -22,6 +22,7 @@ jobs:
           FEED_URL: ${{ secrets.FEED_URL }}
           FEED_URL2: ${{ secrets.FEED_URL2 }}
           FEED_URL3: ${{ secrets.FEED_URL3 }}
+          FEED_URL4: ${{ secrets.FEED_URL4 }}
         run: python build.py --template template.html --out index.html
       - name: Зберегти оновлення
         run: |
