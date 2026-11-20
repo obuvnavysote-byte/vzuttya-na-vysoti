@@ -99,14 +99,15 @@ def localize_pics(products, outdir):
                     except Exception:
                         pass
                 if data is None:
+                    # закрите фото не показуємо (у клієнток воно однаково не відкриється)
                     errors.append(f"{p['a']}: фото {fid[:10]}… закрите — відкрийте доступ «Усі, хто має посилання»")
-                    out.append(u)
                     continue
                 with open(path, "wb") as f:
                     f.write(data)
             keep.add(fn)
             out.append(f"{SITE}/img/{fn}")
         p["g"] = out
+    products[:] = [p for p in products if p["g"]]  # без жодного відкритого фото модель не показуємо
     for fn in os.listdir(imgdir):
         if fn not in keep:
             os.remove(os.path.join(imgdir, fn))
