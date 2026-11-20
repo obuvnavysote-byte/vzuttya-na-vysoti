@@ -429,6 +429,15 @@ SITE = "https://vzuttyanavusoti.com"
 # Товари з цього списку не потрапляють у фід Google Покупок (на сайті вони лишаються).
 GOOGLE_EXCLUDE = {"tapuli"}
 
+# Ваші хіти — артикули (як у вигрузці чи таблиці). Разом з вашими товарами й знижками
+# вони отримують у фіді мітку custom_label_2 = "focus": реклама Google показує лише їх.
+HITS = """
+52290, vn-003, 238, 700305, 234, 12468, 10895, 3967, 3966, 3965, 3960, 3959, 3955, 3950, 3949, 3948,
+3946, 3945, 3944, 3940, 3926, 3927, 3989, 3870, 3861, 232, 197, 171, 172, 166, 12477, 12476, 12475,
+70036, 12462, 5163, 12459, 230, 5165-1, 12454, 700298, 700299, 12452, 5175, 700296, 5187
+"""
+HIT_SET = {x.strip().lower() for x in re.split(r"[,\s]+", HITS) if x.strip()}
+
 
 def source_of(p):
     i = str(p["i"])
@@ -470,6 +479,8 @@ def google_feed(products, path):
             "<g:gender>female</g:gender><g:age_group>adult</g:age_group>"
             + f"<g:custom_label_0>{src}</g:custom_label_0>"
             + ("<g:custom_label_1>sale</g:custom_label_1>" if p.get("o") else "")
+            + ("<g:custom_label_2>focus</g:custom_label_2>"
+               if (src == "own" or p.get("o") or str(p["a"]).strip().lower() in HIT_SET) else "")
             + (f"<g:color>{x(p['c'])}</g:color>" if p["c"] else "")
             + (f"<g:material>{x(p['m'])}</g:material>" if p["m"] else "")
         )
