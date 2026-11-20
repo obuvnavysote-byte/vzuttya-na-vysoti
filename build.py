@@ -425,6 +425,14 @@ def build(root, prefix=""):
 
 
 SITE = "https://vzuttyanavusoti.com"
+# Звідки товар: "own" — ваша таблиця, "tapuli" — фабрика TAPULI, "mydrop" — постачальники MyDrop.
+# Товари з цього списку не потрапляють у фід Google Покупок (на сайті вони лишаються).
+GOOGLE_EXCLUDE = {"tapuli"}
+
+
+def source_of(p):
+    i = str(p["i"])
+    return "own" if i.startswith("my") else "tapuli" if i.startswith("ta") else "mydrop"
 GCAT = {"Аксесуари та догляд": "Apparel & Accessories > Shoe Accessories"}
 
 
@@ -438,6 +446,9 @@ def google_feed(products, path):
            "<description>Жіноче взуття</description>"]
     for p in products:
         if not p["g"] or not p["p"]:
+            continue
+        src = source_of(p)
+        if src in GOOGLE_EXCLUDE:  # ці товари на сайті є, але в рекламу Google не йдуть
             continue
         title = p["n"]
         if p["m"] and p["m"].split()[-1] not in title.lower():
@@ -457,6 +468,8 @@ def google_feed(products, path):
             f"<g:google_product_category>{x(cat)}</g:google_product_category>"
             f"<g:product_type>{x(p['t'] or 'Взуття')}</g:product_type>"
             "<g:gender>female</g:gender><g:age_group>adult</g:age_group>"
+            + f"<g:custom_label_0>{src}</g:custom_label_0>"
+            + ("<g:custom_label_1>sale</g:custom_label_1>" if p.get("o") else "")
             + (f"<g:color>{x(p['c'])}</g:color>" if p["c"] else "")
             + (f"<g:material>{x(p['m'])}</g:material>" if p["m"] else "")
         )
