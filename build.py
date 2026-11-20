@@ -70,6 +70,49 @@ def drive_pic(u):
     return f"https://lh3.googleusercontent.com/d/{m.group(1)}=w1200" if m else u
 
 
+def localize_pics(products, outdir):
+    """Фото з Google Диска зберігаємо на самому сайті (папка img/), щоб вони відкривались у всіх,
+    а не лише в того, хто увійшов у Google. Уже збережені не завантажуємо вдруге."""
+    imgdir = os.path.join(outdir, "img")
+    os.makedirs(imgdir, exist_ok=True)
+    keep, errors = set(), []
+    for p in products:
+        out = []
+        for u in p["g"]:
+            m = re.match(r"https://lh3\.googleusercontent\.com/d/([\w-]+)", u)
+            if not m:
+                out.append(u)
+                continue
+            fid = m.group(1)
+            fn = fid + ".jpg"
+            path = os.path.join(imgdir, fn)
+            if not os.path.exists(path):
+                data = None
+                for src in (u, f"https://drive.google.com/uc?export=view&id={fid}"):
+                    try:
+                        req = urllib.request.Request(src, headers={"User-Agent": "Mozilla/5.0"})
+                        with urllib.request.urlopen(req, timeout=60) as r:
+                            body = r.read()
+                            if r.headers.get_content_type().startswith("image/") and len(body) > 2000:
+                                data = body
+                                break
+                    except Exception:
+                        pass
+                if data is None:
+                    errors.append(f"{p['a']}: фото {fid[:10]}… закрите — відкрийте доступ «Усі, хто має посилання»")
+                    out.append(u)
+                    continue
+                with open(path, "wb") as f:
+                    f.write(data)
+            keep.add(fn)
+            out.append(f"{SITE}/img/{fn}")
+        p["g"] = out
+    for fn in os.listdir(imgdir):
+        if fn not in keep:
+            os.remove(os.path.join(imgdir, fn))
+    return errors
+
+
 SHEET_TYPES = {label.lower(): label for label, _ in TYPES}
 SHEET_SEASON = {"зима": "w", "зимові": "w", "демісезон": "d", "деміс": "d", "осінь": "d", "весна": "d", "літо": "s", "літні": "s"}
 
@@ -445,7 +488,11 @@ def main():
         try:
             host = re.sub(r"^www\.", "", urllib.parse.urlparse(src.strip()).netloc)
             prefix = "" if (i == 0 or "mydrop" in host or not host) else re.sub(r"[^a-z]", "", host)[:2]
-            part = build_sheet(read_bytes(src.strip())) if is_sheet(src) else build(load_feed(src.strip()), prefix)
+            if is_sheet(src):
+                part = build_sheet(read_bytes(src.strip()))
+                SHEET_REPORT["photo_errors"] = localize_pics(part, os.path.dirname(os.path.abspath(a.out)))
+            else:
+                part = build(load_feed(src.strip()), prefix)
         except Exception as e:
             if i == 0:
                 raise
