@@ -38,13 +38,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
 
 /* top bar + header */
-.ticker{background:var(--brand);color:#fff;overflow:hidden;font-size:14px;font-weight:600;white-space:nowrap}
+.ticker{background:#F7DCE2;color:var(--ink);overflow:hidden;font-size:14px;font-weight:600;white-space:nowrap;border-bottom:1px solid #E9C3CC}
 .ticker-track{display:flex;width:max-content;animation:ticker 40s linear infinite}
 .ticker:hover .ticker-track,.ticker:focus-within .ticker-track{animation-play-state:paused}
 .ticker-set{display:flex;flex-shrink:0}
-.ticker-set > *{padding:9px 28px;position:relative;color:#fff;text-decoration:none}
+.ticker-set > *{padding:9px 28px;position:relative;color:var(--ink);text-decoration:none}
 .ticker-set > *::after{content:"✦";position:absolute;right:-6px;opacity:.6}
 .ticker a{text-decoration:underline;text-underline-offset:3px}
+.ticker .bf{display:inline-block;background:#111;color:#fff;font-weight:800;letter-spacing:.06em;padding:2px 8px;border-radius:4px;margin-right:6px;text-decoration:none}
+.ticker .bf-pct{color:#B3261E;font-weight:800}
 @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media (prefers-reduced-motion:reduce){ .ticker-track{animation:none} .ticker{overflow-x:auto} }
 .topbar{background:var(--ink);color:#EFE6E1;font-size:14px}
@@ -740,12 +742,16 @@ $("#openFav").addEventListener("click", ()=>{
 });
 
 /* ---------- біжучий рядок: найбільша знижка зараз ---------- */
+// «Black Friday» показуємо до кінця 30 листопада 2026, потім знову «Розпродаж»
+const BLACK_FRIDAY = Date.now() < new Date("2026-12-01T00:00:00+02:00").getTime();
 (function(){
   const sale = P.filter(p=>p.avail && p.old);
   const links = document.querySelectorAll("[data-ticker-sale]");
   if(!sale.length){ links.forEach(a=>a.remove()); return; }
   const max = Math.max(...sale.map(pct));
-  links.forEach(a=>{ a.textContent = `🔥 Розпродаж: знижки до −${max}% на ${sale.length} ${plural(sale.length)} — дивитись`; });
+  links.forEach(a=>{ a.innerHTML = BLACK_FRIDAY
+    ? `<span class="bf">BLACK FRIDAY</span> знижки до <span class="bf-pct">−${max}%</span> на ${sale.length} ${plural(sale.length)} — дивитись`
+    : `🔥 Розпродаж: знижки до <span class="bf-pct">−${max}%</span> на ${sale.length} ${plural(sale.length)} — дивитись`; });
   document.getElementById("ticker").addEventListener("click", e=>{
     if(!e.target.closest("[data-ticker-sale]")) return;
     e.preventDefault();
@@ -756,7 +762,7 @@ $("#openFav").addEventListener("click", ()=>{
 
 /* ---------- плитки категорій ---------- */
 const CAT_TILES = [
-  {t:"Знижки", sale:true, slug:"znyzhky"},
+  {t:(Date.now() < new Date("2026-12-01T00:00:00+02:00").getTime()) ? "Black Friday" : "Знижки", sale:true, slug:"znyzhky"},
   {t:"Зимове взуття", season:"w", slug:"zyma"},
   {t:"Чоботи", type:"Чоботи"},
   {t:"Ботфорти", type:"Ботфорти"},
@@ -875,7 +881,7 @@ function catTitle(){
   if(t.length) parts.push(t.join(", "));
   if(F.season!=="all") parts.push(t.length ? SEASON[F.season].toLowerCase() : SEASON_TITLE[F.season]);
   if(F.fav) return "Обране";
-  if(F.sale) return "Знижки";
+  if(F.sale) return (Date.now() < new Date("2026-12-01T00:00:00+02:00").getTime()) ? "Black Friday" : "Знижки";
   return parts.length ? parts.join(" · ") : "Новинки";
 }
 function renderGrid(){
