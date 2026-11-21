@@ -435,15 +435,56 @@ GOOGLE_EXCLUDE = {"tapuli"}
 HITS = """
 52290, vn-003, 238, 700305, 234, 12468, 10895, 3967, 3966, 3965, 3960, 3959, 3955, 3950, 3949, 3948,
 3946, 3945, 3944, 3940, 3926, 3927, 3989, 3870, 3861, 232, 197, 171, 172, 166, 12477, 12476, 12475,
-70036, 12462, 5163, 12459, 230, 5165-1, 12454, 700298, 700299, 12452, 5175, 700296, 5187
+70036, 12462, 5163, 12459, 230, 5165-1, 12454, 700298, 700299, 12452, 5175, 700296, 5187,
+# + 75 зимових і демісезонних моделей MyDrop (чоботи, черевики, уггі, ботфорти, ботильйони, козаки;
+#   1500–4500 ₴, найбільше розмірів у наявності) — додано 21.11.2026, щоб реклама мала з чого вибирати
+10904, 5260, 9845-1, 5181-1, 5184, 5454-1, 5453-1, 5403, 5404, 5402, 5360, 5359-1, 5262, 3469, 10905, 10899-1, 10838, 10822, 10804-1, 10750-1, 9850, 9849, 9788-1, 9764, 9664, 5231, 5228, 10927, 10923, 10870, 10869, 8946, 10506, 9749, 7146, 9682, 9660-1, 9589, 8753, 8748, 3491, 10780, 2250, 10779, 9839, 2978, 10818, 3451, 3452, 3453, 3489, 3074, 3969, 5173, 3938, 3033, 5174, 5172, 3954, 3528, 9861-1, 8809, 9474, 3964, 5221, 5220, 5218, 5217, 5254, 5252, 3493, 5157, 5156, 3947, 3442
 """
-HIT_SET = {x.strip().lower() for x in re.split(r"[,\s]+", HITS) if x.strip()}
+HIT_SET = {x.strip().lower() for x in re.split(r"[,\s]+", re.sub(r"#.*", "", HITS)) if x.strip()}
 
 
 def source_of(p):
     i = str(p["i"])
     return "own" if i.startswith("my") else "tapuli" if i.startswith("ta") else "mydrop"
 GCAT = {"Аксесуари та догляд": "Apparel & Accessories > Shoe Accessories"}
+
+
+SEASON_WORD = {"w": "зимові", "d": "демісезонні", "s": "літні"}
+BOOT_TYPES = {"Чоботи", "Черевики", "Ботильйони", "Ботфорти", "Козаки", "Уггі та дутики", "Кросівки та кеди"}
+
+
+def google_title(p):
+    """Назва для Google: тип + «жіночі» + сезон + решта назви + матеріал + колір + розміри —
+    саме ці слова люди вводять у пошук («чоботи жіночі зимові шкіряні чорні 38»)."""
+    t = re.sub(r"\s+", " ", str(p["n"])).strip(" ,.")
+    t = re.sub(r"^[\w-]*\d[\w-]*\s+", "", t)  # артикул на початку назви — прибираємо
+    head, _, rest = t.partition(" ")
+    add = []
+    if p["t"] not in ("Аксесуари та догляд", "Інше") and "жіноч" not in t.lower():
+        add.append("жіночі")
+    season = SEASON_WORD.get(p.get("s"))
+    if (season and p["t"] in BOOT_TYPES and season[:5] not in t.lower()
+            and not (p.get("s") == "w" and "зим" in t.lower())
+            and not (p.get("s") == "d" and "демі" in t.lower())):
+        add.append(season)
+    if head.lower() in ("жіночі", "жіноче", "жіночий"):
+        t = " ".join([head] + add[1:] + ([rest] if rest else []))
+    else:
+        t = " ".join([head] + add + ([rest] if rest else []))
+    parts = [t]
+    stem = lambda w: w.lower()[:max(3, len(w) - 2)]
+    m = (p.get("m") or "").strip()
+    if m and stem(re.split(r"[\s-]+", m)[-1]) not in t.lower():
+        parts.append(m)
+    c = (p.get("c") or "").strip().lower()
+    if c and stem(c.split()[0]) not in t.lower():
+        parts.append(re.sub(r"(ий|ій)$", "і", c) if " " not in c else c)
+    sizes = [z[0] for z in p["z"] if z[2]]
+    nums = [s for s in sizes if str(s).replace(".", "").isdigit()]
+    if nums:
+        lo, hi = min(nums, key=float), max(nums, key=float)
+        parts.append(f"р. {lo}" if lo == hi else f"р. {lo}-{hi}")
+    return ", ".join(parts)
 
 
 def google_feed(products, path):
@@ -460,9 +501,7 @@ def google_feed(products, path):
         src = source_of(p)
         if src in GOOGLE_EXCLUDE:  # ці товари на сайті є, але в рекламу Google не йдуть
             continue
-        title = p["n"]
-        if p["m"] and p["m"].split()[-1] not in title.lower():
-            title += ", " + p["m"]
+        title = google_title(p)
         desc = p["d"] or title
         link = f"{SITE}/m/{p['i']}"
         cat = GCAT.get(p["t"], "Apparel & Accessories > Shoes")
