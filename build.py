@@ -331,6 +331,9 @@ SALE_MARKUP = 0.25  # +25% до ціни зі знижкою
 # Ключ — назва постачальника малими літерами, лише букви й цифри ("Ledi_shoes" -> "ledishoes").
 SUPPLIER_MARKUP = {"ledishoes": 500}
 SUPPLIER_PARAM = re.compile(r"постачальн|поставщ|продав|supplier|vendor|seller|магазин", re.I)
+# Як впізнати постачальника за артикулом, якщо його назви немає у вигрузці.
+# Ledi_shoes: у вигрузці перед кодом постачальника стоїть "700" (307 -> 700307, 20 -> 70020).
+SUPPLIER_ART = {"ledishoes": re.compile(r"^700\d{1,3}(?:-\d{2})?$")}
 MARKUP_HITS = {}
 
 
@@ -340,6 +343,10 @@ def supplier_markup(o):
     for n in names:
         key = re.sub(r"[^0-9a-zа-яіїєґ]", "", n.lower())
         if key in SUPPLIER_MARKUP:
+            return key, SUPPLIER_MARKUP[key]
+    art = (o.findtext("vendorCode") or "").strip()
+    for key, pat in SUPPLIER_ART.items():
+        if pat.match(art) and key in SUPPLIER_MARKUP:
             return key, SUPPLIER_MARKUP[key]
     return None, 0
 
