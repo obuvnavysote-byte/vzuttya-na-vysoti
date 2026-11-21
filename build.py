@@ -327,6 +327,23 @@ def parse_size(txt):
 # у вигрузці ціна зі знижкою без вашої націнки, тому додаємо її тут.
 SALE_MARKUP = 0.25  # +25% до ціни зі знижкою
 
+# Постачальники, у яких у вигрузці стоїть дроп-ціна: додаємо вашу націнку в гривнях.
+# Ключ — назва постачальника малими літерами, лише букви й цифри ("Ledi_shoes" -> "ledishoes").
+SUPPLIER_MARKUP = {"ledishoes": 500}
+SUPPLIER_PARAM = re.compile(r"постачальн|поставщ|продав|supplier|vendor|seller|магазин", re.I)
+MARKUP_HITS = {}
+
+
+def supplier_markup(o):
+    names = [o.findtext("vendor") or ""]
+    names += [p.text or "" for p in o.iter("param") if SUPPLIER_PARAM.search(p.get("name") or "")]
+    for n in names:
+        key = re.sub(r"[^0-9a-zа-яіїєґ]", "", n.lower())
+        if key in SUPPLIER_MARKUP:
+            return key, SUPPLIER_MARKUP[key]
+    return None, 0
+
+
 SIZE_PARAM = re.compile(r"розм|разм|size", re.I)
 FOOT_PARAM = re.compile(r"довжин|длин|устілк|стельк|стоп", re.I)
 COLOR_PARAM = re.compile(r"колір|цвет|color", re.I)
@@ -370,6 +387,11 @@ def build(root, prefix=""):
             old = float(o.findtext("oldprice") or 0)
         except ValueError:
             old = 0
+        sup, extra = supplier_markup(o)
+        if extra:
+            price += extra
+            old = old + extra if old else 0
+            MARKUP_HITS[sup] = MARKUP_HITS.get(sup, 0) + 1
         if prefix and old > price:
             price = float(round(price * (1 + SALE_MARKUP) / 10) * 10)  # округлюємо до 10 ₴
         old = old if old * 0.95 >= price else 0  # знижку менше 5% не показуємо
@@ -564,7 +586,8 @@ def main():
             status.append({"feed": i + 1, "error": str(e)[:200]})
             continue
         print(f"Вигрузка {i + 1}: {len(part)} моделей")
-        status.append({"feed": i + 1, "models": len(part), **({"sheet": dict(SHEET_REPORT)} if is_sheet(src) else {})})
+        status.append({"feed": i + 1, "models": len(part), **({"sheet": dict(SHEET_REPORT)} if is_sheet(src) else {}), **({"markup": dict(MARKUP_HITS)} if MARKUP_HITS else {})})
+        MARKUP_HITS.clear()
         # Кожна вигрузка вже відсортована від нових; перемішуємо їх рівномірно,
         # щоб новинки всіх постачальників були вгорі каталогу.
         own = is_sheet(src)  # ваші власні товари — завжди першими в каталозі
