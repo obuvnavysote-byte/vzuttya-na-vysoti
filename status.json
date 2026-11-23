@@ -1,20 +1,20 @@
 {
- "updated": "23.11.2026, 05:28",
+ "updated": "23.11.2026, 17:20",
  "feeds": [
   {
    "feed": 1,
-   "models": 1988
+   "models": 1989
   },
   {
    "feed": 2,
-   "models": 5048,
+   "models": 5049,
    "markup": {
-    "ledishoes": 295
+    "ledishoes": 297
    }
   },
   {
    "feed": 3,
-   "models": 571
+   "models": 579
   },
   {
    "feed": 4,
