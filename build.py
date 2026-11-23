@@ -564,6 +564,63 @@ def google_feed(products, path):
         f.write("\n".join(out))
 
 
+# --- Обхват гомілки й висота халяви з опису (показуються на картці над розмірами) ---
+FIT_TYPES = {"Чоботи", "Ботфорти", "Козаки", "Уггі та дутики", "Черевики", "Ботильйони"}
+_N = r"(\d{2}(?:[.,]\d)?)"
+_GIRTH = re.compile(r"(обхват|об['’ʼ`]?[єе]м|окружн\w*|ширин\w*)\s*(гомілк\w*|халяв\w*|голенищ\w*|литк\w*|ікр\w*)", re.I)
+_HEIGHT = re.compile(r"висот\w*\s*(від\s*п['’ʼ`]?яти|халяв\w*|голенищ\w*|чоб\w*|ботфорт\w*|вал\w*)", re.I)
+
+
+def _num(s):
+    return float(s.replace(",", "."))
+
+
+def _fmt(a, b=None):
+    f = lambda v: (f"{v:.1f}".rstrip("0").rstrip(".")).replace(".", ",")
+    return f"{f(a)} см" if b is None or abs(a - b) < 0.01 else f"{f(a)}–{f(b)} см"
+
+
+def _value(chunk, lo, hi):
+    """Перше значення «40-43 см», «до 60 см», «38 см» у тексті одразу після назви виміру."""
+    chunk = chunk[:90]
+    chunk = re.split(r"розмір|розміри|р-р", chunk, flags=re.I)[0]  # не плутати з розмірною сіткою
+    parts = chunk.split("\n")
+    chunk = parts[0] if re.search(r"\d", parts[0]) else "\n".join(parts[:2])
+    m = re.search(_N + r"\s*(?:-|–|—|до)\s*" + _N + r"\s*см", chunk)
+    if m:
+        a, b = _num(m.group(1)), _num(m.group(2))
+        if lo <= a <= hi and lo <= b <= hi and a <= b:
+            return _fmt(a, b)
+    m = re.search(r"до\s*" + _N + r"\s*см", chunk)
+    if m and lo <= _num(m.group(1)) <= hi:
+        return "до " + _fmt(_num(m.group(1)))
+    m = re.search(_N + r"\s*см", chunk) or re.search(r"[:\s]" + _N + r"\b", chunk)
+    if m and lo <= _num(m.group(1)) <= hi:
+        return _fmt(_num(m.group(1)))
+    return ""
+
+
+def fit_info(desc, typ):
+    """Обхват гомілки й висота халяви з опису постачальника → [обхват, висота] (порожні рядки, якщо немає)."""
+    if typ not in FIT_TYPES or not desc:
+        return None
+    girth = height = ""
+    m = _GIRTH.search(desc)
+    if m:
+        tail = desc[m.end():m.end() + 300]
+        rows = re.findall(r"(?m)^\s*\d{2}\s*(?:р\.?|розмір)?\s*[-–:]?\s*до\s*" + _N, tail)
+        if len(rows) >= 2:  # таблиця «36 до 44,5 см / 37 до 45 см …» — залежить від розміру
+            vals = [_num(v) for v in rows]
+            girth = _fmt(min(vals), max(vals)) + " (залежить від розміру)"
+        else:
+            girth = _value(tail, 25, 70)
+    m = _HEIGHT.search(desc)
+    if m:
+        lo = 20 if typ in ("Чоботи", "Ботфорти", "Козаки") else 6
+        height = _value(desc[m.end():], lo, 95)
+    return [girth, height] if (girth or height) else None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--feed", default=os.environ.get("FEED_URL"))
@@ -602,6 +659,10 @@ def main():
             if p["i"] not in merged:
                 merged[p["i"]] = ((-1 + n / 1e6) if own else (n + 0.5) / len(part), i, p)
     products = [p for _, _, p in sorted(merged.values(), key=lambda t: (t[0], t[1]))]
+    for p in products:
+        f = fit_info(p.get("d") or "", p.get("t"))
+        if f:
+            p["f"] = f
     kyiv = datetime.now(timezone.utc) + timedelta(hours=3)
     updated = kyiv.strftime("%d.%m.%Y, %H:%M")
     with open(os.path.join(os.path.dirname(os.path.abspath(a.out)), "status.json"), "w", encoding="utf-8") as f:

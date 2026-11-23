@@ -187,6 +187,7 @@ dialog::backdrop{background:rgba(43,29,26,.55)}
 .pd .info{padding:36px 32px;display:flex;flex-direction:column;gap:18px}
 .pd h2{font-family:var(--display);font-weight:400;font-size:32px;line-height:1.15;margin:0}
 .pd .price{font-family:var(--display);font-size:30px;margin:0}
+.pd .fit{margin:0;padding:10px 14px;border-radius:10px;background:#F7DCE2;color:#2B1D1A;font-size:15px;line-height:1.5}
 .pd dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0;font-size:15px}
 .pd dt{color:var(--muted)}
 .pd dd{margin:0}
@@ -540,7 +541,7 @@ const META = /*__DATA__*/null;
 function startApp(DATA){
 const PIC = f => /^https?:/.test(f) ? f : "https://backend.mydrop.com.ua/vendor/products/uploads/" + f;
 const P = DATA.products.map((r,i)=>({
-  id:String(r.i), art:r.a, name:r.n, type:r.t, season:r.s, color:r.c, mat:r.m, heel:r.h,
+  id:String(r.i), art:r.a, name:r.n, type:r.t, season:r.s, color:r.c, mat:r.m, heel:r.h, fit:r.f||null,
   price:r.p, old:r.o||0, pics:(r.g||[]).map(PIC), sizes:r.z.map(z=>({s:z[0],cm:z[1],ok:!!z[2],q:+z[2]||0})),
   desc:r.d||"", order:i
 })).map(p=>(p.avail=p.sizes.some(z=>z.ok), p));
@@ -940,6 +941,7 @@ function openProduct(id){
           ${p.season?`<dt>Сезон</dt><dd>${SEASON[p.season]}</dd>`:""}
           <dt>Артикул</dt><dd>${esc(p.art)}</dd>
         </dl>
+        ${p.fit?`<p class="fit">📏 ${[p.fit[0]?"Обхват гомілки: <b>"+esc(p.fit[0])+"</b>":"", p.fit[1]?"Висота від п'яти: <b>"+esc(p.fit[1])+"</b>":""].filter(Boolean).join("<br>")}</p>`:""}
         <div>
           <p style="font-weight:600;margin:0 0 8px">Розмір</p>
           <div class="sizes" role="group" aria-label="Оберіть розмір">
