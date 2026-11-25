@@ -695,6 +695,9 @@ function detectSource(){
   if(/^(tt|tiktok)/.test(u)) return "TikTok";
   if(/^(fb|facebook)/.test(u)) return "Facebook";
   if(u) return u.slice(0,40);
+  if(q.get("fbclid")) return "Instagram/Facebook реклама";
+  if(q.get("igshid") || q.get("igsh")) return "Instagram";
+  if(q.get("ttclid")) return "TikTok реклама";
   if(q.get("srsltid")) return "Google Покупки (безкоштовно)";
   let host = "";
   try{ host = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./,"") : ""; }catch(_){}
