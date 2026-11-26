@@ -1,5 +1,5 @@
 {
- "updated": "26.11.2026, 07:04",
+ "updated": "26.11.2026, 18:40",
  "feeds": [
   {
    "feed": 1,
@@ -7,20 +7,20 @@
   },
   {
    "feed": 2,
-   "models": 5047,
+   "models": 5043,
    "markup": {
     "ledishoes": 299
    }
   },
   {
    "feed": 3,
-   "models": 590
+   "models": 589
   },
   {
    "feed": 4,
    "models": 3,
    "sheet": {
-    "bytes": 3005,
+    "bytes": 2993,
     "start": "Артикул,Назва,Ціна,Стара ціна,Розміри в наявності,Тип,Сезон,",
     "rows": 3,
     "skipped": [],
